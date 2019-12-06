@@ -3,6 +3,12 @@
 	mips2c
 
 	todo:
+		- what does the stack pointer do?
+		- how to more accurately emulate pc?
+		- get some more complex programs to test out and see what else we need to do!
+		- recursive calls?
+		- incorporate ncurses to make everything look better!
+		- better parsing engine! the current method is pretty meh.
 		- todo eventually: instructions gets interpreted into
 		  machine code and loaded and run from virtual memory
 		- rearrange structure of source code, headers, and example programs
@@ -16,10 +22,17 @@
 		- what to do with pseudoinstructions? process first into atomic expr? or just use direct?
 		- handle .data and .text sections
 		- floating point coprocessor (CP1)
+			- 32 new registers to add
+			- instructions that have to do with floating point
 		- error reporting! (Macro in mips2.h? Or just print to stderr?)
 		- clean up makefile - depend on headers
 		- figure out whats up with incompatible pointer types with linked list for labels
 		- probably memory leaks EVERYWHERE! need to make sure we clean them up!
+		- make it so we can store pointers to memory addresses and put this information
+		  in memory somewhere!
+			- ie, keep a linked list of labels to areas of memory where we've stored
+			  this information. if we get a string, just crawl memory until we find a \0??
+			  (HOW DOES MIPS KNOW HOW LONG A STRING IS?)
 
 	references used:
 		https://www.student.cs.uwaterloo.ca/~cs241/mips/mipsref.pdf
@@ -65,30 +78,6 @@ int main(int argc, char *argv[])
 	char* mem_ptr;
 
 	if (debug) printf("Parsing file: %s\n", program.filename);
-
-	// // -----------------------
-	// // TODO:
-	// printf("writing some mem!\n");
-
-	// mem_ptr = memory;
-	// int memtest = 23;
-	// char chtest[4] = {'h','i','\n','\0'};
-	// printf("writing int %i\n", memtest);
-	// write_memory(&memtest, mem_ptr, sizeof(int));
-	// mem_ptr += 4;
-	// printf("writing string %s\n", chtest);
-	// write_memory(chtest, mem_ptr, sizeof(chtest));
-	// printf("now getting vars\n");
-	// int retrieve_int;
-	// print_memory();
-	// char* retrieve_char = malloc(4);
-	// get_memory(retrieve_char, memory + 4, 4);
-	// get_memory(&retrieve_int, memory, 4);
-	// printf("got int %d\n", retrieve_int);
-	// printf("got str %s\n", retrieve_char); 
-	// exit(1);
-	// // TODO:
-	// // -------------------------
 
 	do {
 		while (pc < program.lines)
@@ -163,6 +152,7 @@ program get_program(char* filename)
 
 	// TODO: MAYBE move all prints to stderr to stdout (??)
 	// taken & edited from stackoverflow!
+	// TODO: WRITE error function!
 	program program;
 	program.filename = (char*) malloc(strlen(filename) + 1);
 	char* line_parse;
@@ -210,7 +200,7 @@ program get_program(char* filename)
 	            }
 	        lines_allocated = new_size;
 	        }
-	        
+
 	    // alloc line for space
 	    program.source[i] = malloc(max_line_len);
 	    line_parse = malloc(max_line_len);
@@ -280,8 +270,6 @@ program get_program(char* filename)
 	    	}
 	    }
 
-
-
 	    int k = 0;
 	    int len = strlen(line_parse);
 
@@ -334,11 +322,12 @@ program get_program(char* filename)
 
 // int free_program(char** program)
 // {
-
+		// eventually use this to release mem alloc'd
 // }
 
 void display_usage()
 {
+	// todo: add more info about command line arugments here
 	printf(" Usage:\n");
 	printf("   ./mip2c -l filename\n");
 	printf("        loads and executes a file.\n");
@@ -359,6 +348,8 @@ void free_label_list(label_list* head)
 
 void print_labels()
 {
+	// display a linked list of labels (this will eventually hold source_lines OR mem pointers?)
+	// or should the mem pointer be different??
 	label_list *curr = labels;
 	while (curr != NULL)
 	{
