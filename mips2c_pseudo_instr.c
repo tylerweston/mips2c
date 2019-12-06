@@ -23,6 +23,14 @@ void _li(int32_t *t, int imm)
 	*t = imm;
 }
 
+void _la(int32_t *t, char* label)
+{
+	// todo, this!
+	// search our linked list of labels and return
+	// the pointer to where that data lives in 
+	// memory
+}
+
 // todo: what is the type of address? is it a char* label?
 // void _la(int32_t *t, int address)
 // {

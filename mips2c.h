@@ -145,15 +145,15 @@
 
 #define NONE 999
 
+#define debug(x) if(debug) printf(ANSI_COLOR_BRIGHT_GREEN "Debug" ANSI_COLOR_RESET ": " x "\n")
+#define warning(x) if(display_warnings) printf(ANSI_COLOR_CYAN "Warning" ANSI_COLOR_RESET ": " x "\n")
+
 // typedefs
 typedef struct {
 	char* filename;
 	char** source;
 	int lines;
 } program;
-
-
-
 
 // todo: write instruction parsing stuff
 typedef enum{
@@ -163,18 +163,23 @@ typedef enum{
 	none
 } instruction_type;
 
-// typedef struct{
-// 	char* label;
-// 	int source_line;
-// 	struct labels_list* next;
-// } label_list;
+typedef enum{
+	DATA_STATE,
+	TEXT_STATE
+} get_program_state;
 
-struct label_list{
+typedef struct{
 	char* label;
 	int source_line;
 	struct labels_list* next;
-};
-typedef struct label_list label_list;
+} label_list;
+
+// struct label_list{
+// 	char* label;
+// 	int source_line;
+// 	struct labels_list* next;
+// };
+// typedef struct label_list label_list;
 
 typedef struct {
 	char* instruction;			// instruction expr
@@ -200,17 +205,19 @@ typedef struct {
 int pc;
 
 // todo: MEMORY goes here!
-void* memory;
+unsigned char* memory;
+int offset;
 
 // we have 32 32-bit registers and HI, LO
 int32_t registers[32];
 int32_t LO;
-int32_t HI;
+int32_t HI;	
 
 // fpu stuff
 int32_t fpu_registers[32];
 
-bool verbose;					// print everything!
+bool verbose;					// verbose - show program lines as interpreted
+bool debug;						// debug mode - display debug info
 bool display_instructions;		// show individual parsed instructions
 bool display_registers;			// display registers at end
 bool display_warnings;
@@ -265,8 +272,8 @@ void _mfhi(int32_t *d);
 void _mthi(int32_t *s);
 void _mflo(int32_t *d);
 void _mtlo(int32_t *s);
-void _jr(int32_t* s, int32_t* pc);
-void _jalr(int32_t* d, int32_t s);
+void _jr(int32_t* s);
+void _jalr(int32_t* d, int32_t *s);
 void _mult(int32_t* s, int32_t *t);
 void _multu(int32_t* s, int32_t *t);
 void _div(int32_t* s, int32_t *t);
@@ -275,8 +282,8 @@ void _add(int32_t* d, int32_t* s, int32_t* t);
 void _addu(int32_t* d, int32_t* s, int32_t* t);
 void _sub(int32_t* d, int32_t* s, int32_t* t);
 void _subu(int32_t* d, int32_t* s, int32_t* t);
-void _addi(int32_t* t, int32_t* s, int32_t imm);
-void _addiu(int32_t* t, int32_t* s, int32_t imm);
+// void _addi(int32_t* t, int32_t* s, int32_t imm);
+// void _addiu(int32_t* t, int32_t* s, int32_t imm);
 void _and(int32_t *d, int32_t* s, int32_t* t);
 void _or(int32_t *d, int32_t* s, int32_t* t);
 void _xor(int32_t *d, int32_t* s, int32_t* t);
@@ -290,6 +297,26 @@ void _beq(int32_t *s, int32_t* t, char* label);
 void _bne(int32_t *s, int32_t* t, char* label);
 void _blez(int32_t *s, char* label);
 void _bgtz(int32_t *s, char* label);
+void _addi(int32_t *t, int32_t *s, int32_t imm);
+void _addiu(int32_t *t, int32_t *s, int32_t imm);
+void _slti(int32_t *t, int32_t *s, int32_t imm);
+void _sltiu(int32_t *t, int32_t *s, int32_t imm);
+void _andi(int32_t *t, int32_t *s, int32_t imm);
+void _ori(int32_t *t, int32_t *s, int32_t imm);
+void _xori(int32_t *t, int32_t *s, int32_t imm);
+
+// Memory
+
+void _lb(int32_t *t, int32_t* s, int32_t offset);
+void _lh(int32_t *t, int32_t* s, int32_t offset);
+void _lbu(int32_t *t, int32_t* s, int32_t offset);
+void _lhu(int32_t *t, int32_t* s, int32_t offset);
+void _lw(int32_t *t, int32_t* s, int32_t offset);
+void _lui(int32_t *t, int32_t offset);
+void _sb(int32_t *t, int32_t* s, int32_t offset);
+void _sh(int32_t *t, int32_t* s, int32_t offset);
+void _sw(int32_t *t, int32_t* s, int32_t offset);
+
 
 // pseudoinstructions
 
@@ -312,9 +339,8 @@ void _print_char();
 void _get_char();
 
 // Memory stuff
-void init__memory();
-void write_mem(void *item, void* mem_loc, int size);
-void get_mem(void *save_loc, void* mem_loc, int size);
+void write_memory(unsigned char *item, unsigned char* mem_loc, int size);
+void get_memory(unsigned char *save_loc, unsigned char* mem_loc, int size);
 void clear_memory();
 void print_memory();
 

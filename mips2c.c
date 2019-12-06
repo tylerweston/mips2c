@@ -3,6 +3,9 @@
 	mips2c
 
 	todo:
+		- todo eventually: instructions gets interpreted into
+		  machine code and loaded and run from virtual memory
+		- rearrange structure of source code, headers, and example programs
 		- LOTS of refactoring to do, especially those gross giant function switch blocks
 		  to get information about them! store it in some sort of dictionary or hashmap or
 		  something!
@@ -13,7 +16,6 @@
 		- what to do with pseudoinstructions? process first into atomic expr? or just use direct?
 		- handle .data and .text sections
 		- floating point coprocessor (CP1)
-		- memory array - LOOK AT OLD CSC369 A4 CODE FOR HOW TO DO THIS!
 		- error reporting! (Macro in mips2.h? Or just print to stderr?)
 		- clean up makefile - depend on headers
 		- figure out whats up with incompatible pointer types with linked list for labels
@@ -22,7 +24,7 @@
 	references used:
 		https://www.student.cs.uwaterloo.ca/~cs241/mips/mipsref.pdf
 		https://inst.eecs.berkeley.edu/~cs61c/resources/MIPS_help.html
-
+		https://github.com/MIPT-ILab/mipt-mips/wiki/MIPS-Instruction-Set
 */
 
 #include "mips2c.h"
@@ -43,7 +45,8 @@ int main(int argc, char *argv[])
 	char* filename;
 	program program;
 
-	verbose = false;					// print everything!
+	verbose = false;					// do we need verbose/debug?
+	debug = false;						// print everything!
 	display_instructions = false;		// show individual parsed instructions
 	display_registers = false;			// display registers at end
 	display_warnings = false;
@@ -51,6 +54,9 @@ int main(int argc, char *argv[])
 	parse_arguments(argc, argv, &filename);
 
 	program = get_program(filename);
+	
+	memory = malloc(MEMORY_SIZE);
+	clear_memory();
 
 	pc = 0;
 	bool finished = false;
@@ -58,25 +64,29 @@ int main(int argc, char *argv[])
 	parsed_instruction* p;
 	char* mem_ptr;
 
-	if (verbose) printf("Parsing file: %s\n", program.filename);
+	if (debug) printf("Parsing file: %s\n", program.filename);
 
 	// // -----------------------
 	// // TODO:
 	// printf("writing some mem!\n");
-	// init_memory();
+
 	// mem_ptr = memory;
-	// int memtest = 420;
-	// char chtest[4] = "hi\n\0";
-	// write_mem(&memtest, mem_ptr, 4);
-	// mem_ptr+=4;
-	// write_mem(&chtest, mem_ptr, 4);
-	// // print_memory();
+	// int memtest = 23;
+	// char chtest[4] = {'h','i','\n','\0'};
+	// printf("writing int %i\n", memtest);
+	// write_memory(&memtest, mem_ptr, sizeof(int));
+	// mem_ptr += 4;
+	// printf("writing string %s\n", chtest);
+	// write_memory(chtest, mem_ptr, sizeof(chtest));
+	// printf("now getting vars\n");
 	// int retrieve_int;
-	// char* retrieve_char;
-	// get_mem(retrieve_char, &memory + 4, 4);
-	// get_mem(retrieve_int, &memory, 4);
+	// print_memory();
+	// char* retrieve_char = malloc(4);
+	// get_memory(retrieve_char, memory + 4, 4);
+	// get_memory(&retrieve_int, memory, 4);
 	// printf("got int %d\n", retrieve_int);
 	// printf("got str %s\n", retrieve_char); 
+	// exit(1);
 	// // TODO:
 	// // -------------------------
 
@@ -107,10 +117,13 @@ int main(int argc, char *argv[])
 void parse_arguments(int argc, char* argv[], char** filename)
 {
 	int opt;
-	while ((opt = getopt(argc, argv, "l:vhriw")) != -1)
+	while ((opt = getopt(argc, argv, "l:vdhriw")) != -1)
 	{
 		switch(opt)
 		{
+			case 'v':
+				verbose = true;
+				break;
 			case 'w':
 				display_warnings = true;
 				break;
@@ -125,8 +138,8 @@ void parse_arguments(int argc, char* argv[], char** filename)
 			case 'i':
 				display_instructions = true;
 				break;
-			case 'v':
-				verbose = true;
+			case 'd':
+				debug = true;
 				break;
 			case 'l':
 				// get program name and load it
@@ -139,9 +152,10 @@ void parse_arguments(int argc, char* argv[], char** filename)
 	}
 }
 
-
 program get_program(char* filename) 
 {
+	get_program_state p;
+	p = TEXT_STATE;
 	// TODO: This will become a state machine that switches between
 	// .data and .text mode, since : means different things in different states
 	// ie, when we are data mode, we want to store labels as pointers or something
@@ -196,7 +210,8 @@ program get_program(char* filename)
 	            }
 	        lines_allocated = new_size;
 	        }
-	    /* Allocate space for the next line */
+	        
+	    // alloc line for space
 	    program.source[i] = malloc(max_line_len);
 	    line_parse = malloc(max_line_len);
 
@@ -208,6 +223,11 @@ program get_program(char* filename)
 
 	    if (fgets(line_parse,max_line_len-1,fp)==NULL)
 	        break;
+
+	    if (line_parse[0] == '#')	// this entire line is a comment, ignore it
+	    {
+	    	continue;
+	    }
 
 	    // todo: RIGHT NOW THIS ONLY HANDLES LABELS THAT ARE ON A SEPARATE LINE!!
 	    // Lines can have format LABEL: INSTRUCTIONS #COMMENTS
@@ -260,10 +280,7 @@ program get_program(char* filename)
 	    	}
 	    }
 
-	    if (line_parse[0] == '#')	// this entire line is a comment, ignore it
-	    {
-	    	continue;
-	    }
+
 
 	    int k = 0;
 	    int len = strlen(line_parse);

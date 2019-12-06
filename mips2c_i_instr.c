@@ -43,6 +43,91 @@ void _bgtz(int32_t *s, char* label)
 	}
 }
 
+void _addi(int32_t *t, int32_t *s, int32_t imm)
+{
+	// todo: signed!
+	*t = *s + imm;
+}
+
+void _addiu(int32_t *t, int32_t *s, int32_t imm)
+{
+	// todo: unsigned!
+	*t = *s + imm;
+}
+
+void _slti(int32_t *t, int32_t *s, int32_t imm)
+{
+	*t = *s < imm ? 1 : 0;
+}
+
+void _sltiu(int32_t *t, int32_t *s, int32_t imm)
+{
+	*t = *s < imm ? 1 : 0;
+}
+
+void _andi(int32_t *t, int32_t *s, int32_t imm)
+{	
+	// todo: test this, is it correct?
+	*t = *s & imm;
+}
+
+void _ori(int32_t *t, int32_t *s, int32_t imm)
+{
+	*t = *s | imm;
+}
+
+void _xori(int32_t *t, int32_t *s, int32_t imm)
+{
+	// todo: test this?!
+	*t = *s ^ imm;
+}
+
+// Memory
+
+void _lb(int32_t *t, int32_t* s, int32_t offset)
+{
+	// t = *(int8*)(s + offset);
+}
+
+void _lh(int32_t *t, int32_t* s, int32_t offset)
+{
+	// t = *(int8*)(s + offset);
+}
+
+void _lbu(int32_t *t, int32_t* s, int32_t offset)
+{
+	// t = *(int8*)(s + offset);
+}
+
+void _lhu(int32_t *t, int32_t* s, int32_t offset)
+{
+	// t = *(int8*)(s + offset);
+}
+
+void _lw(int32_t *t, int32_t* s, int32_t offset)
+{
+	// t = *(int8*)(s + offset);
+}
+
+void _lui(int32_t *t, int32_t offset)
+{
+	// to do
+}
+
+void _sb(int32_t *t, int32_t* s, int32_t offset)
+{
+	// t = *(int8*)(s + offset);
+}
+
+void _sh(int32_t *t, int32_t* s, int32_t offset)
+{
+	// t = *(int8*)(s + offset);
+}
+
+void _sw(int32_t *t, int32_t* s, int32_t offset)
+{
+	// t = *(int8*)(s + offset);
+}
 
 
 // helper functions here!

@@ -60,9 +60,9 @@ void _mtlo(int32_t *s)
 	LO = *s;
 }
 
-void _jr(int32_t* s, int32_t* pc)
+void _jr(int32_t* s)
 {
-	*pc = *s;	// *s must be a multiple of 4
+	pc = *s;	// *s must be a multiple of 4 (THIS ISN'T HOW PC WORKS)
 }
 
 void _jalr(int32_t* d, int32_t s)
@@ -123,17 +123,17 @@ void _subu(int32_t* d, int32_t* s, int32_t* t)
 	*d = *s - *t;
 }
 
-void _addi(int32_t* t, int32_t* s, int32_t imm)
-{
-	// todo: signed
-	*t = *s + imm;
-}
+// void _addi(int32_t* t, int32_t* s, int32_t imm)
+// {
+// 	// todo: signed
+// 	*t = *s + imm;
+// }
 
-void _addiu(int32_t* t, int32_t* s, int32_t imm)
-{
-	// todo: unsigned
-	*t = *s + imm;
-}
+// void _addiu(int32_t* t, int32_t* s, int32_t imm)
+// {
+// 	// todo: unsigned
+// *t = *s + imm;
+// }
 
 
 void _and(int32_t *d, int32_t* s, int32_t* t)
@@ -169,8 +169,5 @@ void _sltu(int32_t *d, int32_t* s, int32_t* t)
 	*d = s < t;
 }
 
-void _ori(int32_t *t, int32_t *s, int32_t imm)
-{
-	*t = *s | imm;
-}
+
 

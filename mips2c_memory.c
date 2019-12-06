@@ -5,20 +5,42 @@
 
 #include "mips2c.h"
 
+// unsigned int x;
+// unsigned char ch;
+
+// unsigned int got_int;
+// unsigned char got_char;
+
+// int address;
+
+// int main()
+// {
+// 	unsigned char* disk = malloc(1024);
+// 	printf("memtest\n");
+// 	x = 69;
+// 	ch = 'a';
+// 	address = 4;
+// 	memcpy(disk + address, &x, sizeof(unsigned int));
+// 	address = 0;
+// 	memcpy(disk + address, &ch, sizeof(unsigned char));
+// 	printf("grabbing stuff from memory\n");
+// 	address = 4;
+// 	memcpy(&got_int, disk + address, sizeof(unsigned int));
+// 	address = 0;
+// 	memcpy(&got_char, disk + address, sizeof(unsigned char));
+// 	printf("int: %i\n", got_int);
+// 	printf("char: %c\n", got_char);
+// }
+
 // TODO:
 
-void init_memory()
-{
-	memory = malloc(MEMORY_SIZE);
-	clear_memory();
-}
-
-void write_mem(void *item, void* mem_loc, int size)
+void write_memory(unsigned char *item, unsigned char* mem_loc, int size)
 {
 	memcpy(mem_loc, item, size);
+	// memcpy(disk + address, &x, sizeof(unsigned int));
 }
 
-void get_mem(void *save_loc, void* mem_loc, int size)
+void get_memory(unsigned char *save_loc, unsigned char* mem_loc, int size)
 {
 	memcpy(save_loc, mem_loc, size);
 }
@@ -30,12 +52,14 @@ void clear_memory()
 
 void print_memory()
 {
-	printf("displaying memory:\n");
-	printf("%s\n",(char*)memory);
-	// for (int x = 0; x<MEMORY_SIZE; x++)
-	// {
-	// 	printf("%c",(char) memory[x]);
-	// 	if (x%4 == 0) printf(" ");
-	// 	if (x%32 == 0) printf("\n");
-	// }
+	// todo: make this look better
+	printf("Displaying Memory:\n");
+	// printf("%s\n",(char*)memory);
+	for (int x = 0; x < MEMORY_SIZE; x++)
+	{
+		printf("%u", memory[x]);
+		if (x % 4 == 0) printf("\t");
+		if (x % 16 == 0) printf("\n%d:", x);
+	}
+	printf("\n");
 }

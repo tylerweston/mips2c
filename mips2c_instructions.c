@@ -30,7 +30,8 @@ parsed_instruction* parse_instruction(char* statement)
 	if ((strcmp(statement, " ") == 0) ||
 		(statement[0] == 0))
 	{
-		if (display_warnings) printf(ANSI_COLOR_CYAN "Warning" ANSI_COLOR_RESET ": parse_instruction got blank statement\n");
+		// if (display_warnings) printf(ANSI_COLOR_CYAN "Warning" ANSI_COLOR_RESET ": parse_instruction got blank statement\n");
+		warning("parse_instruction got blank statement");
 		return NULL;
 	}
 
@@ -276,15 +277,61 @@ void execute_instruction(parsed_instruction* p)
 		// executing r-type instructions
 		switch (p->funct)
 		{
+			case SLL:
+				_sll(p->d_reg, p->t_reg, p->shamt);
+				break;
+			case SRL:
+				_srl(p->d_reg, p->t_reg, p->shamt);
+				break;
+			case SRA:
+				_sra(p->d_reg, p->t_reg, p->shamt);
+				break;
+			case SLLV:
+				_sllv(p->d_reg, p->t_reg, p->s_reg);
+				break;
+			case SRLV:
+				_srlv(p->d_reg, p->t_reg, p->s_reg);
+				break;
+			case SRAV:
+				_srav(p->d_reg, p->t_reg, p->s_reg);
+				break;
+			case JR:
+				_jr(p->s_reg);
+				break;
+			case JALR:		// todo: there is another type of jalr
+				_jalr(p->d_reg, p->s_reg);
+				break;
+			// case JALR_:		// todo: ONE argument call
+			// 	_jalr_(p->s_reg);
+			// 	break;
+			case SYSCALL:
+				_do_syscall();
+				break;
+			case MFHI:
+				_mfhi(p->d_reg);
+				break;
+			case MTHI:
+				_mthi(p->s_reg);
+				break;
+			case MFLO:
+				_mflo(p->d_reg);
+				break;
+			case MTLO:
+				_mtlo(p->s_reg);
+				break;
+			case MULT:
+				_mult(p->s_reg, p->t_reg);
+				break;
+			case MULTU:
+				_multu(p->s_reg, p->t_reg);
+				break;
 			case ADD:
 				_add(p->d_reg, p->s_reg, p->t_reg);
 				break;
 			case SUB:
 				_sub(p->d_reg, p->s_reg, p->t_reg);
 				break;
-			case SYSCALL:
-				_do_syscall();
-				break;
+
 		}
 	}	
 	else
@@ -304,8 +351,53 @@ void execute_instruction(parsed_instruction* p)
 			case BGTZ:
 				_bgtz(p->s_reg, p->label);
 				break;
+			case ADDI:
+				_addi(p->t_reg, p->s_reg, p->imm);
+				break;
+			case ADDIU:
+				_addiu(p->t_reg, p->s_reg, p->imm);
+				break;
+			case SLTI:
+				_slti(p->t_reg, p->s_reg, p->imm);
+				break;
+			case SLTIU:
+				_sltiu(p->t_reg, p->s_reg, p->imm);
+				break;
+			case ANDI:
+				_andi(p->t_reg, p->s_reg, p->imm);
+				break;
 			case ORI:
 				_ori(p->t_reg, p->s_reg, p->imm);
+				break;
+			case XORI:
+				_xori(p->t_reg, p->s_reg, p->imm);
+				break;
+			case LUI:
+				_lui(p->t_reg, p->imm);
+				break;
+			case LB:
+				_lb(p->t_reg, p->s_reg, p->imm);
+				break;
+			case LH:
+				_lh(p->t_reg, p->s_reg, p->imm);
+				break;
+			case LW:
+				_lw(p->t_reg, p->s_reg, p->imm);
+				break;
+			case LBU:
+				_lbu(p->t_reg, p->s_reg, p->imm);
+				break;
+			case LHU:
+				_lhu(p->t_reg, p->s_reg, p->imm);
+				break;
+			case SB:
+				_sb(p->t_reg, p->s_reg, p->imm);
+				break;
+			case SH:
+				_sh(p->t_reg, p->s_reg, p->imm);
+				break;
+			case SW:
+				_sw(p->t_reg, p->s_reg, p->imm);
 				break;
 		}
 	}
@@ -759,6 +851,11 @@ int get_num_args(char* expr)
 		return 2;
 	}
 
+	if (strcmp(expr, "addiu") == 0)
+	{
+		return 2;
+	}
+
 	if (strcmp(expr, "beq") == 0)
 	{
 		return 2;
@@ -779,10 +876,75 @@ int get_num_args(char* expr)
 		return 1;
 	}
 
+	if (strcmp(expr, "andi") == 0)
+	{
+		return 2;
+	}
+
 	if (strcmp(expr, "ori") == 0)
 	{
 		return 2;
 	}
+
+	if (strcmp(expr, "xori") == 0)
+	{
+		return 2;
+	}
+
+	if (strcmp(expr, "slti") == 0)
+	{
+		return 2;
+	}
+
+	if (strcmp(expr, "sltiu") == 0)
+	{
+		return 2;
+	}
+
+	if (strcmp(expr, "lui") == 0)
+	{
+		return 1;
+	}	
+
+	if (strcmp(expr, "lb") == 0)
+	{
+		return 1;
+	}	
+
+	if (strcmp(expr, "lh") == 0)
+	{
+		return 1;
+	}	
+
+	if (strcmp(expr, "lw") == 0)
+	{
+		return 1;
+	}	
+
+	if (strcmp(expr, "lbu") == 0)
+	{
+		return 1;
+	}	
+
+	if (strcmp(expr, "lhu") == 0)
+	{
+		return 1;
+	}	
+
+	if (strcmp(expr, "sb") == 0)
+	{
+		return 1;
+	}
+
+	if (strcmp(expr, "sh") == 0)
+	{
+		return 1;
+	}	
+
+	if (strcmp(expr, "sw") == 0)
+	{
+		return 1;
+	}	
 
 	return -1;	// error!
 
