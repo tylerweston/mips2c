@@ -3,6 +3,9 @@
 	mips2c
 
 	todo:
+		- right now, this doesn't care about portability really
+		  (asides from specifying uint32_t(?)), try to test
+		  on  different systems and see how it goes!
 		- wrap malloc function to check return is not null
 		- what does the stack pointer do?
 		- how to more accurately emulate pc?
@@ -49,7 +52,7 @@
 
 #include "mips2c.h"
 
-// functions only used here
+// private functions
 void parse_arguments(int argc, char* argv[], char** filename);
 
 int main(int argc, char *argv[])
@@ -70,13 +73,17 @@ int main(int argc, char *argv[])
 	display_instructions = false;		// show individual parsed instructions
 	display_registers = false;			// display registers at end
 	display_warnings = false;
+	display_memory = false;
 
 	parse_arguments(argc, argv, &filename);
 
 	program = get_program(filename);
 	
-	memory = malloc(MEMORY_SIZE);
-	clear_memory();
+	// data_segment = malloc(MEMORY_SIZE);
+	data_segment_offset = 0;
+	// heap = malloc(MEMORY_SIZE);
+	// stack = malloc(MEMORY_SIZE);
+	clear_memory();						// also sets $SP and data offset for dataseg
 
 	pc = 0;
 	bool finished = false;
@@ -106,6 +113,7 @@ int main(int argc, char *argv[])
 	} while (!finished);
 
 	if (display_registers) print_registers(registers);
+	if (display_memory) print_memory();
 
 	return 0;
 }
@@ -113,10 +121,13 @@ int main(int argc, char *argv[])
 void parse_arguments(int argc, char* argv[], char** filename)
 {
 	int opt;
-	while ((opt = getopt(argc, argv, "l:vdhriw")) != -1)
+	while ((opt = getopt(argc, argv, "l:vdhriwm")) != -1)
 	{
 		switch(opt)
 		{
+			case 'm':
+				display_memory = true;
+				break;
 			case 'v':
 				verbose = true;
 				break;
@@ -176,16 +187,12 @@ program get_program(char* filename)
 	if (program.source == NULL)
     {
     	error("Out of memory");
-	    // fprintf(stderr,"Out of memory (1).\n");
-	    // exit(1);
     }
 
 	FILE *fp = fopen(filename, "r");
 	if (fp == NULL)
     {
     	error("Error opening file");
-	    // fprintf(stderr,"Error opening file.\n");
-	    // exit(2);
     }
 
 	int i = 0;	// line index
@@ -203,8 +210,6 @@ program get_program(char* filename)
 	        program.source = (char **) realloc(program.source, sizeof(char*)*new_size);
 	        if (program.source == NULL)
 	            {
-	            // fprintf(stderr,"Out of memory.\n");
-	            // exit(3);
 	            error("Out of memory");
 	            }
 	        lines_allocated = new_size;
@@ -216,8 +221,6 @@ program get_program(char* filename)
 
 	    if (program.source[i]==NULL)
         {
-	        // fprintf(stderr,"Out of memory (3).\n");
-	        // exit(4);
             error("Out of memory");
         }
 
@@ -420,6 +423,13 @@ program get_program(char* filename)
 	    			}
 		    	}
 
+		    	label_list *node = malloc(sizeof(label_list));
+		    	node->label = malloc(sizeof(MAX_LABEL_LENGTH));
+		    	node->label = strdup(label_get);
+		    	node->data_type = d_type;
+		    	node->source_line = i;		// we don't care about this!
+		    	node->next = NULL;
+
 		    	int32_t v;
 		    	switch (d_type)
 		    	{
@@ -438,6 +448,28 @@ program get_program(char* filename)
 		    			}
 
 		    			value++;
+
+		    			// write to mem
+		    			node->mem_ptr = data_segment + data_segment_offset;
+		    			int wlen = strlen(value);
+		    			if (d_type == _ASCII)
+		    			{
+		    				wlen--;	// don't write final 0 if we're just an ascii
+		    			}
+		    			printf("trying to write ascii to mem...");
+		    			write_memory(value, node->mem_ptr, wlen);
+		    			printf("success\n");
+		    			data_segment_offset += wlen;
+		    			// for (int wr=0; wr < strlen(value); wr++)
+		    			// {
+		    			// 	write_memory(value[wr], data_segment + data_segment_offset, 1);
+		    			// 	data_segment_offset++;
+		    			// }
+		    			// if (d_type == _ASCIIZ)
+		    			// {
+		    			// 	write_memory(0, data_segment + data_segment_offset, 1);
+		    			// 	data_segment_offset++;
+		    			// }
 		    			break;
 
 		    		case _BYTE:
@@ -445,13 +477,17 @@ program get_program(char* filename)
 		    		case _HALF:
 		    			// check if we're a char
 		    			v = str_to_int(value);
+		    			node->mem_ptr = data_segment + data_segment_offset;
+		    			write_memory(&v, node->mem_ptr, sizeof(v));
+		    			data_segment_offset += sizeof(v);
 		    			break;
 
 		    		default:
 		    			error("Type not supported yet");
 		    			break;
 		    	}
-
+		    	// todo: round data_Segment_offset to nearest multiple of 4
+		    	data_segment_offset = align4(data_segment_offset);
 		    	free(data_type);
 		    	// free(value);		// how do we free this now that it's changed?
 
@@ -461,12 +497,7 @@ program get_program(char* filename)
 		    	// we need a way to keep track of where we are writing to
 		    	// in our data section!
 
-		    	label_list *node = malloc(sizeof(label_list));
-		    	node->label = malloc(sizeof(MAX_LABEL_LENGTH));
-		    	node->label = strdup(label_get);
-		    	node->data_type = d_type;
-		    	node->source_line = i;		// we don't care about this!
-		    	node->next = NULL;
+
 		    	
 		    	if (head == NULL)
 		    	{
@@ -556,6 +587,8 @@ program get_program(char* filename)
 	{
 		printf("Got labels:\n");
 		print_labels();
+		printf("Memory:\n");
+		print_memory();
 	}
 
 	return program;
@@ -626,4 +659,11 @@ void print_labels()
 		curr = curr->next;
 	}
 
+}
+
+inline int align4(int num) {
+	// return num rounded up to closest multiple of 4
+	int remainder = num % 4;
+    if (remainder != 0) num += 4 - remainder;
+    return num;
 }

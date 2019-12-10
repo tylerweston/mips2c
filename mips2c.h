@@ -15,7 +15,7 @@
 // defines
 
 #define MAX_LABEL_LENGTH 16	// max # of chars allowed per label
-#define MEMORY_SIZE 1024	// 1024 word memory
+#define MEMORY_SIZE 128		// 32 * 4 memory!
 
 // macros  for regiters
 #define _$0 0
@@ -67,6 +67,7 @@
 #define ANSI_COLOR_BRIGHT_MAGENTA "\x1b[35;1m"
 #define ANSI_COLOR_BRIGHT_CYAN    "\x1b[36;1m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
+
 
 // #define ANSI_BG_COLOR_BLACK   "\x1b[40m"
 // #define ANSI_BG_COLOR_RED     "\x1b[41m"
@@ -190,13 +191,6 @@ typedef struct{
 	struct labels_list* next;
 } label_list;
 
-// struct label_list{
-// 	char* label;
-// 	int source_line;
-// 	struct labels_list* next;
-// };
-// typedef struct label_list label_list;
-
 typedef struct {
 	char* instruction;			// instruction expr
 	instruction_type type;		// R, I, J type
@@ -215,14 +209,16 @@ typedef struct {
 } parsed_instruction;
 
 
-// pseudocode here? how to implement?
-
 // program counter
 int pc;
 
 // todo: MEMORY goes here!
-unsigned char* memory;
-int offset;
+unsigned char* data_segment[MEMORY_SIZE];
+int data_segment_offset;
+
+unsigned char* heap[MEMORY_SIZE];
+int heap_offset;
+unsigned char* stack[MEMORY_SIZE];
 
 // we have 32 32-bit registers and HI, LO
 int32_t registers[32];
@@ -237,6 +233,7 @@ bool debug;						// debug mode - display debug info
 bool display_instructions;		// show individual parsed instructions
 bool display_registers;			// display registers at end
 bool display_warnings;
+bool display_memory;
 
 label_list* labels;
 
@@ -247,6 +244,7 @@ program get_program(char* filename);
 // int free_program(char** program);
 int str_to_int(char* str);	// just in case atoi is a no go
 void display_usage();
+int align4(int num);
 
 // instructions
 int32_t instruction_to_machine_code(parsed_instruction* p);
@@ -353,6 +351,8 @@ void _do_terminate_with_code();
 void _do_terminate_no_code();
 void _print_char();
 void _get_char();
+void _print_string();
+void _read_string();
 
 // Memory stuff
 void write_memory(unsigned char *item, unsigned char* mem_loc, int size);

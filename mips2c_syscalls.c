@@ -45,6 +45,12 @@ void _do_syscall()
 		case 1:
 			_print_int();
 			break;
+		case 4:
+			_print_string();
+			break;
+		case 8:
+			_read_string();
+			break;
 		case 5:
 			_get_int();
 			break;
@@ -61,6 +67,31 @@ void _do_syscall()
 			_do_terminate_with_code();
 			break;
 	}
+}
+
+void _print_string()
+{
+	// print string		4	$a0 = address of null-terminated string to print	 
+	// todo:
+	//	- grab pointer to mem address from $a0
+	//	- iterate over each char, if it is 0, break and return
+	//  - if it is not, just display that character
+
+}
+
+void _read_string()
+{	 
+	// read string		8	$a0 = address of input buffer
+	// 						$a1 = maximum number of characters to read	See note below table
+	int in_buff_addr = read_register(registers, _$A0);
+	int max_len = read_register(registers, _$A1);
+	char format[8];
+	sprintf(format, "%%%ds", max_len);
+	char in_string[128];	// todo: change this to not hardcoded
+	scanf(format, in_string);
+	// printf("read string: %s\n", in_string);
+	// write to heap + some offset? Is this how this works?
+	write_memory(in_string, heap + in_buff_addr, strlen(in_string) + 1);
 }
 
 void _print_int()

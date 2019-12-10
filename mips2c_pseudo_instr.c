@@ -8,6 +8,9 @@
 
 #include "mips2c.h"
 
+// helper
+char* get_memptr_from_labels(char* search_label);
+
 void _move(int32_t *t, int32_t* s)
 {
 	*t = *s;
@@ -25,6 +28,7 @@ void _li(int32_t *t, int imm)
 
 void _la(int32_t *t, char* label)
 {
+	*t = (int32_t) get_memptr_from_labels(label);
 	// todo, this!
 	// search our linked list of labels and return
 	// the pointer to where that data lives in 
@@ -74,4 +78,24 @@ void _b(char* label)
 {
 	// branch unconditional
 	_beq(0, 0, label);
+}
+
+char* get_memptr_from_labels(char* search_label)
+{
+	// print_labels();
+	label_list *curr = labels;
+	while (curr != NULL)
+	{
+		if (strcmp(curr->label, search_label) == 0)
+		{
+			return curr->mem_ptr;
+		}
+		// printf("label: %s line number: %d\n", curr->label, curr->source_line);
+		curr = curr->next;
+	}
+	char* err;
+	sprintf(err, "Cannot find label %s", search_label);
+	error(err);
+	// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET ": Cannot find label %s\n", search_label);
+	// exit(1);
 }
