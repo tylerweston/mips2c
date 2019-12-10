@@ -1,8 +1,12 @@
 /*
 
 	mips2c
+	Tyler Weston, 2019/2020
+	"I should probably be studying..."
 
 	todo:
+		- switch all error messages over to error function
+		- parsing data section still seems brittle! look into this and test more!
 		- right now, this doesn't care about portability really
 		  (asides from specifying uint32_t(?)), try to test
 		  on  different systems and see how it goes!
@@ -11,7 +15,13 @@
 		- how to more accurately emulate pc?
 		- get some more complex programs to test out and see what else we need to do!
 		- recursive calls?
+			- this will be dealt with through the jump and link instructions?
+			- store pc in $31 to be used later
+			- will also need to implement stack and $sp to do this?
 		- incorporate ncurses to make everything look better!
+			- split the screen into two halves? have one display
+			  current running source and the other display infromation
+			  about our program?
 		- better parsing engine! the current method is pretty meh.
 		- todo eventually: instructions gets interpreted into
 		  machine code and loaded and run from virtual memory
@@ -24,11 +34,9 @@
 		- need a way to handle memory reads/writes, ie 40($s0)
 			- memory addresses should just be pointers into a memory array?
 		- what to do with pseudoinstructions? process first into atomic expr? or just use direct?
-		- handle .data and .text sections
 		- floating point coprocessor (CP1)
 			- 32 new registers to add
 			- instructions that have to do with floating point
-		- error reporting! can we get it to report a line number?
 		- clean up makefile - depend on headers
 		- figure out whats up with incompatible pointer types with linked list for labels
 		- probably memory leaks EVERYWHERE! need to make sure we clean them up!
@@ -54,6 +62,7 @@
 
 // private functions
 void parse_arguments(int argc, char* argv[], char** filename);
+void display_usage(bool full);
 
 int main(int argc, char *argv[])
 {
@@ -61,7 +70,7 @@ int main(int argc, char *argv[])
 	printf("--------------------------\n");
 	if (argc == 1)
 	{
-		display_usage();
+		display_usage(false);
 	}
 	// parse command line inputs	
 
@@ -77,8 +86,12 @@ int main(int argc, char *argv[])
 
 	parse_arguments(argc, argv, &filename);
 
+	if (debug) printf("Parsing file: %s\n", program.filename);
+
 	program = get_program(filename);
 	
+	if (debug) printf("Setting up memory\n");
+
 	// data_segment = malloc(MEMORY_SIZE);
 	data_segment_offset = 0;
 	// heap = malloc(MEMORY_SIZE);
@@ -91,7 +104,6 @@ int main(int argc, char *argv[])
 	parsed_instruction* p;
 	char* mem_ptr;
 
-	if (debug) printf("Parsing file: %s\n", program.filename);
 
 	do {
 		while (pc < program.lines)
@@ -138,9 +150,7 @@ void parse_arguments(int argc, char* argv[], char** filename)
 				display_registers = true;
 				break;
 			case 'h':
-				// todo: display help here
-				// move this to a helper, build a display
-				display_usage();
+				display_usage(true);
 				break;
 			case 'i':
 				display_instructions = true;
@@ -153,7 +163,7 @@ void parse_arguments(int argc, char* argv[], char** filename)
 				*filename = optarg;
 				break;
 			default:
-				// print command line args here
+				display_usage(false);
 				break;
 		}
 	}
@@ -405,8 +415,6 @@ program get_program(char* filename)
 	    				}
 	    				else
 	    				{
-	    					// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET ": Invalid data type\n");
-	    					// exit(1);
 	    					error("Invalid data type");
 	    				}
 	    				d_state++;
@@ -456,10 +464,10 @@ program get_program(char* filename)
 		    			{
 		    				wlen--;	// don't write final 0 if we're just an ascii
 		    			}
-		    			printf("trying to write ascii to mem...");
+		    			// todo: does this really work?
 		    			write_memory(value, node->mem_ptr, wlen);
-		    			printf("success\n");
 		    			data_segment_offset += wlen;
+		    			// or write one char at a time?
 		    			// for (int wr=0; wr < strlen(value); wr++)
 		    			// {
 		    			// 	write_memory(value[wr], data_segment + data_segment_offset, 1);
@@ -583,10 +591,14 @@ program get_program(char* filename)
 
 	labels = head;
 
-	if (verbose) 
+	if (debug) 
 	{
 		printf("Got labels:\n");
 		print_labels();
+	}
+
+	if (display_memory)
+	{
 		printf("Memory:\n");
 		print_memory();
 	}
@@ -607,12 +619,22 @@ program get_program(char* filename)
 		// eventually use this to release mem alloc'd
 // }
 
-void display_usage()
+void display_usage(bool full)
 {
 	// todo: add more info about command line arugments here
 	printf(" Usage:\n");
 	printf("   ./mip2c -l filename\n");
 	printf("        loads and executes a file.\n");
+	printf("		-h to see all commands\n");
+	if (!full)
+	{ 
+		exit(0);
+	}
+	printf(" -m\t\tdisplay memory\n");
+	printf(" -i\t\tdisplay parsed instructions\n");
+	printf(" -v\t\tverbose mode\n");
+	printf(" -r\t\tdisplay registers\n");
+	printf(" -d\t\tdebug mode\n");
 	exit(0);
 }
 

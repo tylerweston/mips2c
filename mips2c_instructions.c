@@ -17,13 +17,25 @@ int32_t instruction_to_machine_code(parsed_instruction* p)
 	// 5 bits rd
 	// 5 bit shamt
 	// 6 bits func
+	// switch based on instruction type
+	// todo:
+	//	- this will all just be masking and bit-shift tomfoolery!
+	//	- R INSTRUCTION
+	//	- convert opcode to binary
+	//	- convert s reg to binary
+	//	- convert t reg to binary
+	//	- convert d reg to binary
+	//	- convert shamt to binary
+	//	- convert func to binary
+	//	- I/J INSTRUCTION
+	//	- todo...
+	//	- Concatenate all bits
+	//	- return this 32bit binary number!
+
 }
 
 parsed_instruction* parse_instruction(char* statement)
 {
-	// TODO:
-	//	given a statement, this should return a parsed_instruction
-	//  this will include all the specified register (numbers)
 	// Given a statement, parse it to return a parsed_instruction
 
 	// if we ever get a blank statement, throw a warning
@@ -36,22 +48,14 @@ parsed_instruction* parse_instruction(char* statement)
 	}
 
 	char* s = strdup(statement);	// make a copy so we don't mess up original
-	// char* rest = s;
-	// char* args = strdup(statement);
 	const char d[2] = " ";
 
 	char *expr;
 
 	// todo: this doesn't currently handle two spaces in a row correctly, fix that
 	// todo: do NOT do this with strsep, implement this by hand
-	// while (0 != (expr = strsep(&s, " ")))
 	expr = strtok_r(s, d, &s);
-	// {
-	// if (strcmp(expr," ") == 0)
-	// {
-	// 	// skip blank tokens
-	// 	continue;
-	// }
+
 	// todo: for now assume lower case
 	// expr = lower_case(expr);
 
@@ -119,6 +123,9 @@ parsed_instruction* parse_instruction(char* statement)
 		return NULL;	//we're just a label, skip us (FIGURE OUT A BETTER WAY TO DO THIS!)
 	}
 
+	// TODO: LI and LA should be implemented next!
+	// so we can begin testing out string stuff!
+
 	switch (p->type)
 	{
 		case none:
@@ -126,9 +133,84 @@ parsed_instruction* parse_instruction(char* statement)
 			// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET ":\nHave none instruction type!\n");
 			// exit(1);
 			// break;
+
+		case P_instruction:
+			if (strcmp(expr, "move") == 0 ||
+				strcmp(expr, "not") == 0 )
+			{
+				// two args, t then s
+				rt = strtok_r(s, d, &s);
+				if (rt == NULL)
+				{
+					error("Couldn't read register t");
+				}
+				p->t_reg = get_register(rt);
+				p->t_reg_no = get_register_no(rt);
+				if (verbose) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
+
+				rs = strtok_r(s, d, &s);
+				if (rs == NULL)
+				{
+					error("Couldn't read register s");
+				}
+				p->s_reg = get_register(rs);
+				p->s_reg_no = get_register_no(rs);
+				if (verbose) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
+			}
+
+			if (strcmp(expr, "li") == 0 ||
+				strcmp(expr, "la") == 0)
+			{
+
+				char* toke;
+
+				toke = strtok_r(s, d, &s);
+				if (toke == NULL)
+				{
+					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register t\n");
+					exit(1);
+				}
+				if (strcmp(expr, "li") == 0)
+				{
+					p->t_reg = get_register(toke);
+					p->t_reg_no = get_register_no(toke);	
+				}
+								
+				if (strcmp(expr, "la") == 0)
+				{
+					p->d_reg = get_register(toke);
+					p->d_reg_no = get_register_no(toke);	
+				}
+				if (verbose) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, toke);
+			
+
+				char* get_label;
+				get_label = strtok_r(s, d, &s);
+				if (get_label == NULL)
+				{
+					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read label\n");
+					exit(1);	
+				}
+				// p->label = strdup(get_label);
+				if (strcmp(expr, "la") == 0)
+				{
+					strcpy(p->label, get_label);
+					if (verbose) printf(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);		
+				}
+
+				if (strcmp(expr, "li") == 0)
+				{
+					p->imm = str_to_int(get_label);
+					if (verbose) printf(ANSI_COLOR_CYAN "%s " ANSI_COLOR_RESET, get_label);
+				}
+			}
+
+			break;
+
 		case R_instruction:
 
 			// todo: how to grab shift amount?
+
 			// printf("Currect s: %s\n", s);
 			if (strcmp(expr, "syscall") == 0)
 			{
@@ -143,8 +225,7 @@ parsed_instruction* parse_instruction(char* statement)
 				rd = strtok_r(s, d, &s);
 				if (rd == NULL)
 				{
-					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register d\n");
-					exit(1);
+					error("Couldn't read register d");
 				}
 				p->d_reg = get_register(rd);
 				p->d_reg_no = get_register_no(rd);
@@ -154,8 +235,7 @@ parsed_instruction* parse_instruction(char* statement)
 			rs = strtok_r(s, d, &s);
 			if (rs == NULL)
 			{
-				printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
-				exit(1);
+				error("Couldn't read register s");
 			}
 			p->s_reg = get_register(rs);
 			p->s_reg_no = get_register_no(rs);
@@ -164,8 +244,7 @@ parsed_instruction* parse_instruction(char* statement)
 			rt = strtok_r(s, d, &s);
 			if (rt == NULL)
 			{
-				printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register t\n");
-				exit(1);
+				error("Couldn't read register t");
 			}
 			p->t_reg = get_register(rt);
 			p->t_reg_no = get_register_no(rt);
@@ -213,10 +292,8 @@ parsed_instruction* parse_instruction(char* statement)
 					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read label\n");
 					exit(1);	
 				}
-				// p->label = strdup(get_label);
 				strcpy(p->label, get_label);
 				if (verbose) printf(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);	
-
 			} 
 			else 
 			{
@@ -271,6 +348,48 @@ void execute_instruction(parsed_instruction* p)
 {
 	// todo: check to make sure target is not $zero!
 	if (display_instructions) print_instruction(p);
+
+	if (p->type == P_instruction)
+	{
+		if (strcmp(p->instruction, "li") == 0)
+		{
+			_li(p->t_reg, p->imm);
+			return;
+		}
+
+		if (strcmp(p->instruction, "la") == 0)
+		{
+			_la(p->d_reg, p->label);
+			return;
+		}
+
+		if (strcmp(p->instruction, "clear") == 0)
+		{
+			_clear(p->t_reg);
+			return;
+		}
+
+		if (strcmp(p->instruction, "nop") == 0)
+		{
+			_nop();	// don't really need this but just in case
+			return;
+		}
+
+		if (strcmp(p->instruction, "move") == 0)
+		{
+			_move(p->t_reg, p->s_reg);
+			return;
+		}
+
+		if (strcmp(p->instruction, "not") == 0)
+		{
+			_not(p->t_reg, p->s_reg);
+			return;
+		}
+
+		// todo: rest of pseudoinstructions herer!
+
+	}
 
 	if (p->opcode == 0)
 	{
@@ -469,11 +588,23 @@ instruction_type get_instruction_type(char* expr)
 		return J_instruction;
 	}
 
-	// if (strcmp(expr, "b") == 0)
-	// {
-	// 	// should we preprocess this or use it as pseudoinstructions?
-	// 	return P_instruction;
-	// }
+	if (strcmp(expr, "b") == 0 ||
+		strcmp(expr, "abs") == 0 ||
+		strcmp(expr, "blt") == 0 ||
+		strcmp(expr, "bgt") == 0 ||
+		strcmp(expr, "ble") == 0 ||
+		strcmp(expr, "neg") == 0 ||
+		strcmp(expr, "not") == 0 ||
+		strcmp(expr, "bge") == 0 ||
+		strcmp(expr, "li") == 0 ||
+		strcmp(expr, "la") == 0 ||
+		strcmp(expr, "move") == 0 ||
+		strcmp(expr, "sge") == 0 ||
+		strcmp(expr, "sgt") == 0)
+	{
+		// should we preprocess this or use it as pseudoinstructions?
+		return P_instruction;
+	}
 	return none;
 
 }
@@ -538,23 +669,23 @@ int get_funct(char* expr)
 		return DIV;
 	}
 // todo: function # still
-// SRA
-// SLLV
-// SRLV
-// SRAV
-// JR
-// JALR
-// MFHI
-// MTHI
-// MFLO
-// MTLO
-// MULTU
-// DIV
-// DIVU
-// ADDU
-// SUBU
-// SLT
-// SLTU
+// return SRA;
+// return SLLV;
+// return SRLV;
+// return SRAV;
+// return JR;
+// return JALR;
+// return MFHI;
+// return MTHI;
+// return MFLO;
+// return MTLO;
+// return MULTU;
+// return DIV;
+// return DIVU;
+// return ADDU;
+// return SUBU;
+// return SLT;
+// return SLTU;
 	return NONE;	// error OPCODE, something went wrong!
 
 }
@@ -783,14 +914,17 @@ int get_num_args(char* expr)
 	{
 		return 2;
 	}
+
 	if (strcmp(expr, "multu") == 0)
 	{
 		return 2;
 	}
+
 	if (strcmp(expr, "div") == 0)
 	{
 		return 2;
 	}
+
 	if (strcmp(expr, "divu") == 0)
 	{
 		return 2;
@@ -829,6 +963,7 @@ int get_num_args(char* expr)
 	{
 		return 3;
 	}
+
 	if (strcmp(expr,"nor") == 0)
 	{
 		return 3;
@@ -955,34 +1090,37 @@ void print_instruction(parsed_instruction* p) {
 	// display information about a parsed instruction!
 
 	printf("------------------------------\n");
-	printf("instruction name:\n");
-	printf("%s\n", p->instruction);
-	printf("Instruction type:\n");
+	printf("instruction name: \t%s\n", p->instruction);
+	// printf("%s\n", p->instruction);
+	printf("Instruction type: \t");
 
 	switch(p->type)
 	{
-		case 0:
+		case R_instruction:
 			printf("R instruction\n");
 			break;
-		case 1:
+		case I_instruction:
 			printf("I instruction\n");
 			break;
-		case 2:
+		case J_instruction:
 			printf("J instruction\n");
+			break;
+		case P_instruction:
+			printf("pseudoinstruction\n");
 			break;
 		case none:
 			printf("none!\n");
 			break;
 	}
 
-	printf("opcode: %d\n", p->opcode);
-	printf("S register: %s / %d\n", reg_num_to_str(p->s_reg_no), p->s_reg_no);
-	printf("T register: %s / %d\n", reg_num_to_str(p->t_reg_no), p->t_reg_no);
-	printf("D register: %s / %d\n", reg_num_to_str(p->d_reg_no), p->d_reg_no);	
-	printf("shamt: %d\n", p->shamt);
-	printf("funct: %d\n", p->funct);
-	printf("immediate: %d\n", p->imm);
-	printf("address: %d\n", p->address);
+	printf("opcode: \t%d\n", p->opcode);
+	printf("S register: \t%s / %d\n", reg_num_to_str(p->s_reg_no), p->s_reg_no);
+	printf("T register: \t%s / %d\n", reg_num_to_str(p->t_reg_no), p->t_reg_no);
+	printf("D register: \t%s / %d\n", reg_num_to_str(p->d_reg_no), p->d_reg_no);	
+	printf("shamt: \t%d\n", p->shamt);
+	printf("funct: \t%d\n", p->funct);
+	printf("immediate: \t%d\n", p->imm);
+	printf("address: \t%d\n", p->address);
 	printf("------------------------------\n");
 
 }

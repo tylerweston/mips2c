@@ -161,6 +161,7 @@ typedef enum{
 	R_instruction,
 	I_instruction,
 	J_instruction,
+	P_instruction,	// pseudoinstructions
 	none
 } instruction_type;
 
@@ -239,11 +240,9 @@ label_list* labels;
 
 // functions
 
-void parse_arguments(int argc, char* argv[], char** filename);
 program get_program(char* filename);
 // int free_program(char** program);
 int str_to_int(char* str);	// just in case atoi is a no go
-void display_usage();
 int align4(int num);
 
 // instructions
@@ -337,6 +336,7 @@ void _sw(int32_t *t, int32_t* s, int32_t offset);
 void _move(int32_t *t, int32_t* s);
 void _clear(int32_t *t);
 void _li(int32_t *t, int imm);
+void _la(int32_t *d, char* label);
 // void _div(int32_t *d, int32_t *s, int32_t *t);
 void _rem(int32_t *d, int32_t *s, int32_t *t);
 void _not(int32_t *t, int32_t *s);
