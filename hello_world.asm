@@ -1,6 +1,9 @@
 # hello world
 .data
 out_string: .asciiz "\nHello, World!\n"
+inty: .word 420
+hvar: .half 12
+bvar: .byte 2
 .text
 main:
 #li $v0, 4	#4=syscall to pring string

@@ -3,6 +3,7 @@
 	mips2c
 
 	todo:
+		- wrap malloc function to check return is not null
 		- what does the stack pointer do?
 		- how to more accurately emulate pc?
 		- get some more complex programs to test out and see what else we need to do!
@@ -24,7 +25,7 @@
 		- floating point coprocessor (CP1)
 			- 32 new registers to add
 			- instructions that have to do with floating point
-		- error reporting! (Macro in mips2.h? Or just print to stderr?)
+		- error reporting! can we get it to report a line number?
 		- clean up makefile - depend on headers
 		- figure out whats up with incompatible pointer types with linked list for labels
 		- probably memory leaks EVERYWHERE! need to make sure we clean them up!
@@ -38,6 +39,12 @@
 		https://www.student.cs.uwaterloo.ca/~cs241/mips/mipsref.pdf
 		https://inst.eecs.berkeley.edu/~cs61c/resources/MIPS_help.html
 		https://github.com/MIPT-ILab/mipt-mips/wiki/MIPS-Instruction-Set
+*/
+
+/*
+    0x00400000 - Text segment - program instructions 
+    0x10000000 - Data segment 
+    0x7FFFFFFF, and decreasing addresses - Stack segment
 */
 
 #include "mips2c.h"
@@ -143,8 +150,8 @@ void parse_arguments(int argc, char* argv[], char** filename)
 
 program get_program(char* filename) 
 {
-	get_program_state p;
-	p = TEXT_STATE;
+	parser_state p_state;
+	p_state = TEXT_STATE;
 	// TODO: This will become a state machine that switches between
 	// .data and .text mode, since : means different things in different states
 	// ie, when we are data mode, we want to store labels as pointers or something
@@ -152,7 +159,6 @@ program get_program(char* filename)
 
 	// TODO: MAYBE move all prints to stderr to stdout (??)
 	// taken & edited from stackoverflow!
-	// TODO: WRITE error function!
 	program program;
 	program.filename = (char*) malloc(strlen(filename) + 1);
 	char* line_parse;
@@ -162,57 +168,63 @@ program get_program(char* filename)
 	label_list* tail = NULL;
 
 	strcpy(program.filename, filename);
-	int lines_allocated = 128;
-	int max_line_len = 100;
+	int lines_allocated = 128;			// start with 128 lines of space and increase if needed
+	int max_line_len = 100;				// cap line limit at 100 chars
 
 	// Allocate lines of text
 	program.source = (char **)malloc(sizeof(char*)*lines_allocated);
-	if (program.source==NULL)
-	    {
-		    fprintf(stderr,"Out of memory (1).\n");
-		    exit(1);
-	    }
+	if (program.source == NULL)
+    {
+    	error("Out of memory");
+	    // fprintf(stderr,"Out of memory (1).\n");
+	    // exit(1);
+    }
 
 	FILE *fp = fopen(filename, "r");
 	if (fp == NULL)
-	    {
-		    fprintf(stderr,"Error opening file.\n");
-		    exit(2);
-	    }
+    {
+    	error("Error opening file");
+	    // fprintf(stderr,"Error opening file.\n");
+	    // exit(2);
+    }
 
 	int i = 0;	// line index
 	while(1)
     {
+	
 	    int j;	// character index
-
 	    // alloc more space if needed
 	    if (i >= lines_allocated)
-	        {
+        {
 	        int new_size;
 
 	        // double alloc'd space
-	        new_size = lines_allocated*2;
-	        program.source = (char **)realloc(program.source,sizeof(char*)*new_size);
-	        if (program.source==NULL)
+	        new_size = lines_allocated * 2;
+	        program.source = (char **) realloc(program.source, sizeof(char*)*new_size);
+	        if (program.source == NULL)
 	            {
-	            fprintf(stderr,"Out of memory.\n");
-	            exit(3);
+	            // fprintf(stderr,"Out of memory.\n");
+	            // exit(3);
+	            error("Out of memory");
 	            }
 	        lines_allocated = new_size;
-	        }
+        }
 
 	    // alloc line for space
 	    program.source[i] = malloc(max_line_len);
 	    line_parse = malloc(max_line_len);
 
 	    if (program.source[i]==NULL)
-	        {
-	        fprintf(stderr,"Out of memory (3).\n");
-	        exit(4);
-	        }
+        {
+	        // fprintf(stderr,"Out of memory (3).\n");
+	        // exit(4);
+            error("Out of memory");
+        }
 
-	    if (fgets(line_parse,max_line_len-1,fp)==NULL)
+	    if (fgets(line_parse, max_line_len-1, fp) == NULL)
+	    {
 	        break;
+	    }
 
 	    if (line_parse[0] == '#')	// this entire line is a comment, ignore it
 	    {
@@ -222,58 +234,268 @@ program get_program(char* filename)
 	    // todo: RIGHT NOW THIS ONLY HANDLES LABELS THAT ARE ON A SEPARATE LINE!!
 	    // Lines can have format LABEL: INSTRUCTIONS #COMMENTS
 	    // ALSO todo, we want to strip white space from start of line!
-	    if (strchr(line_parse, ':') != NULL)	// is : ONLY in a line when it is a label??
+	    // todo: make sure we haven't tried to store the same label twice,
+	    //		 this would probably boink things up!
+	    if (strchr(line_parse, ':') != NULL)
 	    {
-
 	    	if (isalpha(line_parse[0]) == 0)
 	    	{
 	    		printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET": Label %s must start with alphabet (not number/symbol)\n", line_parse);
 	    		exit(1);
 	    	}
 
-	    	char* label_get = malloc(MAX_LABEL_LENGTH);
-	    	int pi;
-	    	for (pi = 0; ; pi++)
-	    	{
-	    		if (line_parse[pi] == ':')
-	    		{
-	    			break;
-	    		}
-	    		label_get[pi] = line_parse[pi];
-	    	}
-	    	label_get[pi] = 0;
-	    	// ok we got a label
+	    	// every thing underneath here is only if we are in text section, we match up a label with a line number!
+	    	// so use a state machine here to check if we are in .data or .text section
 
-	    	// todo: IF THERE IS MORE OF A LINE HERE, WE NEED TO PARSE IT!!
-	    	
-	    	label_list *node = malloc(sizeof(label_list));
-	    	node->label = malloc(sizeof(MAX_LABEL_LENGTH));
-	    	node->label= strdup(label_get);
-	    	node->source_line = i;
-	    	node->next = NULL;
-	    	
-	    	// now add it to a linked list along with it's line number!
+	    	if (p_state == TEXT_STATE)
+	    	{
+		    	char* label_get = malloc(MAX_LABEL_LENGTH);
+		    	int pi;
+		    	for (pi = 0; ; pi++)
+		    	{
+		    		if (line_parse[pi] == ':')
+		    		{
+		    			break;
+		    		}
+		    		label_get[pi] = line_parse[pi];
+		    	}
+		    	label_get[pi] = 0;	// null terminate the string
+		    	// ok we got a label
 
-	    	if (head == NULL)
-	    	{
-	    		head = node;
-	    	}
-	    	
-	    	if (tail == NULL)
-	    	{
-	    		tail = node;
-	    	}
-	    	else
-	    	{
-	    		tail->next = node;
-	    		tail = node;
-	    	}
+		    	// todo: IF THERE IS MORE OF A LINE HERE, WE NEED TO PARSE IT!!
+		    	// see what else happens here
+
+
+		    	// now add it to a linked list along with it's line number!	    	
+		    	label_list *node = malloc(sizeof(label_list));
+		    	node->label = malloc(sizeof(MAX_LABEL_LENGTH));
+		    	node->label = strdup(label_get);
+		    	node->data_type = _PC;
+		    	node->source_line = i;
+		    	node->next = NULL;
+		    	
+		    	if (head == NULL)
+		    	{
+		    		head = node;
+		    	}
+		    	
+		    	if (tail == NULL)
+		    	{
+		    		tail = node;
+		    	}
+		    	else
+		    	{
+		    		tail->next = node;
+		    		tail = node;
+		    	}
+		    }
+
+		    if (p_state == DATA_STATE)
+		    {
+		    	// todo: FIRST, make sure our next thing starts with '.'
+		    	// and is a proper data type!
+		    	// options are 
+		    	char* data_type = malloc(MAX_LABEL_LENGTH);
+		    	// data types
+		    	// ascii, asciiz, byte, halfword, word, float, double
+		    	// halfword = 16bit
+		    	// word = 32bit
+		    	// byte = 8bit.
+		    	// Integer = 32bit
+		    	// character = 4 bits
+		    	int k = 0;
+		    	data_types d_type;
+		    	char* p = strdup(strchr(line_parse, ':'));
+		    	char* value = malloc(MAX_LABEL_LENGTH);
+		    	p++;	// p should now point to a space
+		    	int d_state = 0;
+		    	int data_size = 0;	// in bits! (/8 for size in char)
+		    	// get label
+		    	char* label_get = malloc(MAX_LABEL_LENGTH);
+		    	int pi;
+		    	for (pi = 0; ; pi++)
+		    	{
+		    		if (line_parse[pi] == ':')
+		    		{
+		    			break;
+		    		}
+		    		label_get[pi] = line_parse[pi];
+		    	}
+		    	label_get[pi] = 0;	// null terminate the string
+
+		    	while(1)
+		    	{
+		    		if (d_state == 0)
+		    		{
+		    			if (*p != ' ')
+		    			{
+		    				// todo: throw error here
+		    				// this should be a space before label
+		    				warning("Expected space here");
+		    			}
+		    			d_state++;
+		    			p++;
+		    		}
+		    		else 
+		    		if (d_state == 1)
+		    		{
+		    			if (*p != '.')
+		    			{
+		    				// todo: this throws an error
+		    				// we need a .
+		    				error("Expected . before data type");
+
+		    			}
+		    			d_state++;
+		    			p++;
+		    		} 
+		    		else
+	    			if (d_state == 2)
+		    		{	
+		    			// grab data type
+		    			data_type[k++] = *p;
+		    			if (*p == ' ')
+		    			{
+		    				data_type[k - 1] = 0;
+		    				k = 0;	// reset k so we can use it again
+		    				d_state++;
+		    			}
+		    			p++;
+		 
+		    		}
+	    			else
+	    			if (d_state == 3)
+	    			{
+	    				// error check data type
+	    				if (strcmp(data_type, "ascii") == 0)
+	    				{
+	    					d_type = _ASCII;
+	    				}
+	    				else if (strcmp(data_type, "asciiz") == 0)
+	    				{
+	    					d_type = _ASCIIZ;
+	    				}
+	    				else if (strcmp(data_type, "byte") == 0)
+	    				{
+	    					d_type = _BYTE;
+	    				}
+	    				else if (strcmp(data_type, "half") == 0)
+	    				{
+	    					d_type = _HALF;
+	    				}
+	    				else if (strcmp(data_type, "word") == 0)
+	    				{
+	    					// this can also initialize an array
+	    					d_type = _WORD;
+	    				}
+	    				else if (strcmp(data_type, "float") == 0)
+	    				{
+	    					d_type = _FLOAT;
+	    				}
+	    				else if (strcmp(data_type, "double") == 0)
+	    				{
+	    					d_type = _DOUBLE;
+	    				}
+	    				else if (strcmp(data_type, "space") == 0)
+	    				{
+	    					d_type = _SPACE;
+	    				}
+	    				else
+	    				{
+	    					// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET ": Invalid data type\n");
+	    					// exit(1);
+	    					error("Invalid data type");
+	    				}
+	    				d_state++;
+	    			}
+	    			else
+	    			{
+	    				value[k++] = *p;
+		    			if (*p == '\n' || *p == '\r')
+		    			{
+		    				// value[k] = 0;	//don't use this
+		    				break;
+		    			}
+		    			p++;
+	    			}
+		    	}
+
+		    	int32_t v;
+		    	switch (d_type)
+		    	{
+		    		case _ASCII:
+		    		case _ASCIIZ:
+		    			// remove start and finish quotes
+		    			if (value[k - 2] != '\"')
+		    			{
+		    				error("String must end with quotation mark");
+		    			}
+		    			value[k - 2] = 0;
+
+		    			if (value[0] != '\"')
+		    			{
+		    				error("Strings must start with quotation mark");
+		    			}
+
+		    			value++;
+		    			break;
+
+		    		case _BYTE:
+		    		case _WORD:
+		    		case _HALF:
+		    			// check if we're a char
+		    			v = str_to_int(value);
+		    			break;
+
+		    		default:
+		    			error("Type not supported yet");
+		    			break;
+		    	}
+
+		    	free(data_type);
+		    	// free(value);		// how do we free this now that it's changed?
+
+		    	// TODO:
+		    	// write out stuff to memory and store a pointer to that
+		    	// memory under mem_ptr!
+		    	// we need a way to keep track of where we are writing to
+		    	// in our data section!
+
+		    	label_list *node = malloc(sizeof(label_list));
+		    	node->label = malloc(sizeof(MAX_LABEL_LENGTH));
+		    	node->label = strdup(label_get);
+		    	node->data_type = d_type;
+		    	node->source_line = i;		// we don't care about this!
+		    	node->next = NULL;
+		    	
+		    	if (head == NULL)
+		    	{
+		    		head = node;
+		    	}
+		    	
+		    	if (tail == NULL)
+		    	{
+		    		tail = node;
+		    	}
+		    	else
+		    	{
+		    		tail->next = node;
+		    		tail = node;
+		    	}
+
+		    }
+		    if (p_state == GLOBAL_STATE)
+		    {
+		    	// todo: what happens here??
+		    }
+		    // do we need to check if (p_state == GLOBAL_STATE) here? this is probably only for compiled progrs?
+
 	    }
 
 	    int k = 0;
 	    int len = strlen(line_parse);
 
-		for (int j=0;j<len;j++)	
+		for (int j=0; j<len; j++)	
 	    {
 	    	if (line_parse[j] == '#') 	// rest of line is comment, ignore it
 	    	{
@@ -291,15 +513,36 @@ program get_program(char* filename)
 
 	    program.source[i][k] = '\0';
 
+	    // todo: does this do anythin useful or nah?
 	    // clean up line endings
-	    for (j = strlen(program.source[i])-1;j >= 0 && 
-	    		(program.source[i][j] == '\n' || 
-	    		program.source[i][j] == '\r' ||
-	    		program.source[i][j] == '#' || 
-	    		program.source[i][j] == '\t' ||
-	    		program.source[i][j] == ' ');j--);
+	    for (j = strlen(program.source[i])-1; j >= 0 && 
+			    	   (program.source[i][j] == '\n' || 
+			    		program.source[i][j] == '\t' ||
+			    		program.source[i][j] == '\r' ||
+			    		program.source[i][j] == '#' || 
+
+			    		program.source[i][j] == ' '); j--);
 	    	program.source[i][j+1] = '\0';
+
+	    // switch between different parser states
+	    if (program.source[i][0] == '.')
+	    {
+	    	if (strcmp(program.source[i], ".data") == 0)
+	    	{
+	    		p_state = DATA_STATE;
+	    	}
+	    	if (strcmp(program.source[i], ".text") == 0)
+	    	{
+	    		p_state = TEXT_STATE;
+	    	}
+	    	if (strcmp(program.source[i], ".global") == 0)
+	    	{
+	    		p_state = GLOBAL_STATE;
+	    	}
+	    }
+
 	    i++;
+
     }
 
 	/* Close file */
@@ -308,6 +551,12 @@ program get_program(char* filename)
 	program.lines = i;
 
 	labels = head;
+
+	if (verbose) 
+	{
+		printf("Got labels:\n");
+		print_labels();
+	}
 
 	return program;
 }
@@ -350,10 +599,30 @@ void print_labels()
 {
 	// display a linked list of labels (this will eventually hold source_lines OR mem pointers?)
 	// or should the mem pointer be different??
+	const char * data_type_labels[] = {
+	    "Program Counter",
+	    "ascii",
+	    "asciiz",
+	    "byte",
+	    "halfword",
+	    "word",
+	    "float",
+	    "double",
+	    "space"
+	};
+
 	label_list *curr = labels;
 	while (curr != NULL)
 	{
-		printf("label: %s line number: %d\n", curr->label, curr->source_line);
+		if (curr->data_type == _PC)
+		{
+			printf("label: %s\t\tline number: %d\n", curr->label, curr->source_line);
+		}
+		else
+		{
+			printf("label: %s\t\ttype: %s\n", curr->label, 
+				data_type_labels[curr->data_type]);
+		}
 		curr = curr->next;
 	}
 

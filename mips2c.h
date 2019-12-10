@@ -164,13 +164,29 @@ typedef enum{
 } instruction_type;
 
 typedef enum{
+	_PC,
+	_ASCII,
+	_ASCIIZ,
+	_BYTE,
+	_HALF,	//halfword
+	_WORD,
+	_FLOAT,
+	_DOUBLE,
+	_SPACE
+} data_types;
+
+
+typedef enum{
 	DATA_STATE,
-	TEXT_STATE
-} get_program_state;
+	TEXT_STATE,
+	GLOBAL_STATE
+} parser_state;
 
 typedef struct{
 	char* label;
+	data_types data_type;
 	int source_line;
+	char* mem_ptr;
 	struct labels_list* next;
 } label_list;
 
@@ -346,3 +362,5 @@ void print_memory();
 
 // for debugging purposes
 void print_labels();
+
+void error(char* error);
