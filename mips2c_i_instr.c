@@ -106,7 +106,7 @@ void _lhu(int32_t *t, int32_t* s, int32_t offset)
 
 void _lw(int32_t *t, int32_t* s, int32_t offset)
 {
-	// t = *(int8*)(s + offset);
+	*t = *s + offset;
 }
 
 void _lui(int32_t *t, int32_t offset)
@@ -126,7 +126,9 @@ void _sh(int32_t *t, int32_t* s, int32_t offset)
 
 void _sw(int32_t *t, int32_t* s, int32_t offset)
 {
-	// t = *(int8*)(s + offset);
+	// s will be a POINTER into memory somewhere!
+	// (our HEAP)
+	*t = *s + offset;
 }
 
 

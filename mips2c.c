@@ -5,6 +5,12 @@
 	"I should probably be studying..."
 
 	todo:
+		- this memory stuff is getting better but still not great, can't read or
+		  write stuff efficiently! spin this off into a smaller test file and
+		  play around with it more!
+		- .align directive
+		- SW, LW, JAL, J, JR
+		- test SLT
 		- switch all error messages over to error function
 		- parsing data section still seems brittle! look into this and test more!
 		- right now, this doesn't care about portability really
@@ -93,7 +99,7 @@ int main(int argc, char *argv[])
 	if (debug) printf("Setting up memory\n");
 
 	// data_segment = malloc(MEMORY_SIZE);
-	data_segment_offset = 0;
+
 	// heap = malloc(MEMORY_SIZE);
 	// stack = malloc(MEMORY_SIZE);
 	clear_memory();						// also sets $SP and data offset for dataseg
@@ -177,6 +183,7 @@ program get_program(char* filename)
 	// .data and .text mode, since : means different things in different states
 	// ie, when we are data mode, we want to store labels as pointers or something
 	// like that so that we can use them directly
+	int data_segment_offset = 0;	// track where we are in our data segment
 
 	// TODO: MAYBE move all prints to stderr to stdout (??)
 	// taken & edited from stackoverflow!
@@ -336,13 +343,12 @@ program get_program(char* filename)
 		    	}
 		    	label_get[pi] = 0;	// null terminate the string
 
-		    	while(1)
+		    	while(1)	// memory label parse state machine
 		    	{
 		    		if (d_state == 0)
 		    		{
 		    			if (*p != ' ')
 		    			{
-		    				// todo: throw error here
 		    				// this should be a space before label
 		    				warning("Expected space here");
 		    			}
@@ -354,10 +360,8 @@ program get_program(char* filename)
 		    		{
 		    			if (*p != '.')
 		    			{
-		    				// todo: this throws an error
 		    				// we need a .
 		    				error("Expected . before data type");
-
 		    			}
 		    			d_state++;
 		    			p++;
@@ -458,14 +462,14 @@ program get_program(char* filename)
 		    			value++;
 
 		    			// write to mem
-		    			node->mem_ptr = data_segment + data_segment_offset;
+		    			node->mem_ptr = data_segment_offset;
 		    			int wlen = strlen(value);
 		    			if (d_type == _ASCII)
 		    			{
 		    				wlen--;	// don't write final 0 if we're just an ascii
 		    			}
 		    			// todo: does this really work?
-		    			write_memory(value, node->mem_ptr, wlen);
+		    			write_memory(value, memory + data_segment_offset, wlen);
 		    			data_segment_offset += wlen;
 		    			// or write one char at a time?
 		    			// for (int wr=0; wr < strlen(value); wr++)
@@ -485,8 +489,8 @@ program get_program(char* filename)
 		    		case _HALF:
 		    			// check if we're a char
 		    			v = str_to_int(value);
-		    			node->mem_ptr = data_segment + data_segment_offset;
-		    			write_memory(&v, node->mem_ptr, sizeof(v));
+		    			node->mem_ptr = data_segment_offset;
+		    			write_memory(&v, memory + data_segment_offset, sizeof(v));
 		    			data_segment_offset += sizeof(v);
 		    			break;
 

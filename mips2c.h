@@ -15,7 +15,7 @@
 // defines
 
 #define MAX_LABEL_LENGTH 16	// max # of chars allowed per label
-#define MEMORY_SIZE 128		// 32 * 4 memory!
+#define MEMORY_SIZE 1024
 
 // macros  for regiters
 #define _$0 0
@@ -214,12 +214,13 @@ typedef struct {
 int pc;
 
 // todo: MEMORY goes here!
-unsigned char* data_segment[MEMORY_SIZE];
-int data_segment_offset;
+char* memory[MEMORY_SIZE];
+// unsigned char* data_segment[MEMORY_SIZE];
+// int data_segment_offset;
 
-unsigned char* heap[MEMORY_SIZE];
-int heap_offset;
-unsigned char* stack[MEMORY_SIZE];
+// unsigned char* heap[MEMORY_SIZE];
+// int heap_offset;
+// unsigned char* stack[MEMORY_SIZE];
 
 // we have 32 32-bit registers and HI, LO
 int32_t registers[32];
@@ -258,7 +259,7 @@ int32_t get_funct(char* expr);
 // register stuff
 // todo: we can take all of these references to registers out of here
 // since our registers now live in a more global scope than we assumed
-// it would!
+// it would! (might be in bad taste to do this though?)
 void print_info();
 int32_t write_register(int32_t* registers, int reg_num, int value);
 int32_t read_register(int32_t* registers, int reg_num);
@@ -355,8 +356,8 @@ void _print_string();
 void _read_string();
 
 // Memory stuff
-void write_memory(unsigned char *item, unsigned char* mem_loc, int size);
-void get_memory(unsigned char *save_loc, unsigned char* mem_loc, int size);
+void write_memory(char *item, char* mem_loc, int size);
+void get_memory(char *save_loc, char* mem_loc, int size);
 void clear_memory();
 void print_memory();
 

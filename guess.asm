@@ -3,6 +3,9 @@
 start:
 li $t0, 57              # $t0 contains the number to guess!
 guessagain:
+li $v0, 11
+li $a0, 58
+syscall
 li $v0, 5               # read int syscall
 syscall              	# get our integer guess
 beq $t0, $v0, winner   	# if we guess correct, we win

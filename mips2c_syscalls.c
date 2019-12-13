@@ -76,7 +76,22 @@ void _print_string()
 	//	- grab pointer to mem address from $a0
 	//	- iterate over each char, if it is 0, break and return
 	//  - if it is not, just display that character
-
+	printf("I'm gonna print a string!");
+	int addr = read_register(registers, _$A0);
+	int ind = 0;
+	printf("got addrs %d\n", addr);
+	char* c = malloc(1);
+	while(1)
+	{
+		memcpy(c, memory + addr + ind, 1);
+		ind++;
+		printf("got char: %c\n", *c);
+		if (*c == 0)
+		{
+			break;
+		}
+	}
+	free(c);
 }
 
 void _read_string()
@@ -87,11 +102,13 @@ void _read_string()
 	int max_len = read_register(registers, _$A1);
 	char format[8];
 	sprintf(format, "%%%ds", max_len);
-	char in_string[128];	// todo: change this to not hardcoded
+	char* in_string = malloc(max_len + 1);	// todo: change this to not hardcoded
 	scanf(format, in_string);
-	// printf("read string: %s\n", in_string);
+	printf("read string: %s\n", in_string);
+	printf("in buff addr: %d\n", in_buff_addr);
 	// write to heap + some offset? Is this how this works?
-	write_memory(in_string, heap + in_buff_addr, strlen(in_string) + 1);
+	write_memory(in_string, memory + in_buff_addr, max_len);
+	// strcpy(memory + in_buff_addr, in_string);
 }
 
 void _print_int()

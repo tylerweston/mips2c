@@ -7,6 +7,9 @@ nl: .asciiz "\n"
 ori $v0, $0, 4
 la $a0, str1
 syscall	# should print string "This is a test string" and newline
+ori $v0, $0, 4
+la $a0, str2
+syscall	# should print string "This is a test string" and newline
 ori $a0, $0, 0	# save to address 0
 ori $a1, $0, 8	# get up to 8 characters
 ori $v0, $0, 8  # syscall number 8

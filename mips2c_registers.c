@@ -37,15 +37,16 @@ int write_register(int32_t* registers, int reg_num, int value)
 		reg_num == 1 || reg_num == 28 || reg_num == 31 ||
 		reg_num == 30 || reg_num == 29)
 	{
-		printf("Error: Trying to overwrite register %s\n", reg_num_to_str(reg_num));
-		exit(1);
+		// printf("Error: Trying to overwrite register %s\n", reg_num_to_str(reg_num));
+		// exit(1);
+		error("Trying to overwrite invalid register!");
 	}
 
 	registers[reg_num] = value;
 	return 1;
 }
 
-int read_register(int32_t* registers, int reg_num)
+int32_t read_register(int32_t* registers, int reg_num)
 {
 	return registers[reg_num];
 }

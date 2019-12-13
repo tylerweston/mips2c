@@ -37,7 +37,7 @@ int32_t instruction_to_machine_code(parsed_instruction* p)
 parsed_instruction* parse_instruction(char* statement)
 {
 	// Given a statement, parse it to return a parsed_instruction
-
+	if (debug) printf("Parsing instruction %s\n", statement);
 	// if we ever get a blank statement, throw a warning
 	if ((strcmp(statement, " ") == 0) ||
 		(statement[0] == 0))
@@ -256,6 +256,38 @@ parsed_instruction* parse_instruction(char* statement)
 			// printf("Currect s: %s\n", s);
 
 			// if we are beq, bne, blez, or bgtz we want s first, then t
+			if (strcmp(expr, "sw") == 0 ||
+				strcmp(expr, "lw") == 0)
+			{
+				// $t, offset($s)
+				rt = strtok_r(s, d, &s);
+				if (rt == NULL)
+				{
+					error("Couldn't read register t");
+				}
+				p->t_reg = get_register(rt);
+				p->t_reg_no = get_register_no(rt);
+				if (verbose) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
+
+				imm = strtok_r(s, "(", &s);
+				p->imm = str_to_int(imm);
+
+				if (verbose) printf(ANSI_COLOR_CYAN "%s" ANSI_COLOR_RESET, imm);
+
+				rs = strtok_r(s, ")", &s);
+				if (rs == NULL)
+				{
+					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
+					exit(1);
+				}
+
+				p->s_reg = get_register(rs);
+				p->s_reg_no = get_register_no(rs);
+				if (verbose) printf("(");
+				if (verbose) printf(ANSI_COLOR_MAGENTA "%s" ANSI_COLOR_RESET, rs);	
+				if (verbose) printf(")");
+			}
+			else
 			if (strcmp(expr, "beq") == 0 ||
 				strcmp(expr, "bne") == 0 ||
 				strcmp(expr, "blez") == 0 ||
@@ -669,6 +701,11 @@ int get_funct(char* expr)
 		return DIV;
 	}
 // todo: function # still
+
+	if (strcmp(expr, "slt") == 0)
+	{
+		return SLT;
+	}
 // return SRA;
 // return SLLV;
 // return SRLV;
@@ -684,7 +721,7 @@ int get_funct(char* expr)
 // return DIVU;
 // return ADDU;
 // return SUBU;
-// return SLT;
+
 // return SLTU;
 	return NONE;	// error OPCODE, something went wrong!
 

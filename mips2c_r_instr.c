@@ -70,6 +70,7 @@ void _jalr(int32_t* d, int32_t *s)
 	// TO DO!
 	// t <- s
 	// r <- pc + 8 (?? 2 instructions)
+	// _$RA <- pc + 8 (2) (so put NOP after!)
 	// pc <- t
 }
 
@@ -160,13 +161,13 @@ void _nor(int32_t *d, int32_t* s, int32_t* t)
 void _slt(int32_t *d, int32_t* s, int32_t* t)
 {
 	// signed
-	*d = s < t;
+	*d = *s < *t;
 }
 
 void _sltu(int32_t *d, int32_t* s, int32_t* t)
 {
 	// unsigned
-	*d = s < t;
+	*d = *s < *t;
 }
 
 
