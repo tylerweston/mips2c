@@ -255,6 +255,7 @@ int32_t get_opcode(char* expr);
 int get_num_args(char* expr);
 void print_instruction(parsed_instruction* p);
 int32_t get_funct(char* expr);
+int get_line_from_labels(char* search_label);
 
 // register stuff
 // todo: we can take all of these references to registers out of here
@@ -270,8 +271,8 @@ void print_registers(int32_t* registers);
 
 // j - type instructions
 
-void _j(int32_t *pc);
-void _jal(int32_t *pc);
+void _j(char* label);
+void _jal(char* label);
 
 // r - type instructions
 

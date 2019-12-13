@@ -93,7 +93,7 @@ char* get_memptr_from_labels(char* search_label)
 		// printf("label: %s line number: %d\n", curr->label, curr->source_line);
 		curr = curr->next;
 	}
-	char* err;
+	char err[128];
 	sprintf(err, "Cannot find label %s", search_label);
 	error(err);
 	// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET ": Cannot find label %s\n", search_label);

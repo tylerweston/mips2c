@@ -9,7 +9,7 @@
 		  write stuff efficiently! spin this off into a smaller test file and
 		  play around with it more!
 		- .align directive
-		- SW, LW, JAL, J, JR
+		- SW, LW, JR
 		- test SLT
 		- switch all error messages over to error function
 		- parsing data section still seems brittle! look into this and test more!
@@ -98,10 +98,7 @@ int main(int argc, char *argv[])
 	
 	if (debug) printf("Setting up memory\n");
 
-	// data_segment = malloc(MEMORY_SIZE);
-
-	// heap = malloc(MEMORY_SIZE);
-	// stack = malloc(MEMORY_SIZE);
+	memory = malloc(MEMORY_SIZE);
 	clear_memory();						// also sets $SP and data offset for dataseg
 
 	pc = 0;
@@ -109,7 +106,6 @@ int main(int argc, char *argv[])
 	char* statement;
 	parsed_instruction* p;
 	char* mem_ptr;
-
 
 	do {
 		while (pc < program.lines)

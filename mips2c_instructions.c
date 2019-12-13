@@ -63,6 +63,39 @@ parsed_instruction* parse_instruction(char* statement)
 	// t register: target
 	// d register: destination
 
+	// if (verbose) 
+	// {
+	// 	if (strchr(expr, ':') != NULL) {
+	// 		printf(ANSI_COLOR_BRIGHT_YELLOW);
+	// 	}
+	// 	else
+	// 	{
+	// 		printf(ANSI_COLOR_BRIGHT_GREEN);
+	// 	}
+	// 	printf("%s " ANSI_COLOR_RESET, expr);
+	// }
+
+	if (strchr(expr, ':') != NULL) 
+	{
+		if (verbose)
+		{
+			printf(ANSI_COLOR_BRIGHT_YELLOW);
+			printf("%s " ANSI_COLOR_RESET, expr);
+		}
+		// printf("\n");
+		// return NULL;	//we're just a label, skip us (FIGURE OUT A BETTER WAY TO DO THIS!)
+		// printf("current s: %s\n",s);
+
+		expr = strtok_r(s, d, &s);
+		if (expr == NULL) return NULL;
+	}
+
+	if (verbose)
+	{
+				printf(ANSI_COLOR_BRIGHT_GREEN);
+				printf("%s " ANSI_COLOR_RESET, expr);	
+	}
+
 	parsed_instruction* p = malloc (sizeof(parsed_instruction) + MAX_LABEL_LENGTH + 5);
 	p->instruction = malloc(strlen(expr)+1);
 	// p->instruction = strdup(expr);
@@ -105,23 +138,6 @@ parsed_instruction* parse_instruction(char* statement)
 		}
 	}
 
-	if (verbose) 
-	{
-		if (strchr(expr, ':') != NULL) {
-			printf(ANSI_COLOR_BRIGHT_YELLOW);
-		}
-		else
-		{
-			printf(ANSI_COLOR_BRIGHT_GREEN);
-		}
-		printf("%s " ANSI_COLOR_RESET, expr);
-	}
-
-	if (strchr(expr, ':') != NULL) 
-	{
-		printf("\n");
-		return NULL;	//we're just a label, skip us (FIGURE OUT A BETTER WAY TO DO THIS!)
-	}
 
 	// TODO: LI and LA should be implemented next!
 	// so we can begin testing out string stuff!
@@ -277,8 +293,9 @@ parsed_instruction* parse_instruction(char* statement)
 				rs = strtok_r(s, ")", &s);
 				if (rs == NULL)
 				{
-					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
-					exit(1);
+					// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
+					// exit(1);
+					error("Couldn't read register s");
 				}
 
 				p->s_reg = get_register(rs);
@@ -297,8 +314,9 @@ parsed_instruction* parse_instruction(char* statement)
 				rs = strtok_r(s, d, &s);
 				if (rs == NULL)
 				{
-					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
-					exit(1);
+					// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
+					// exit(1);
+					error("Couldn't read register s");
 				}
 				p->s_reg = get_register(rs);
 				p->s_reg_no = get_register_no(rs);
@@ -309,8 +327,9 @@ parsed_instruction* parse_instruction(char* statement)
 					rt = strtok_r(s, d, &s);
 					if (rt == NULL)
 					{
-						printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register t\n");
-						exit(1);
+						// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register t\n");
+						// exit(1);
+						error("Couldn't read register t");
 					}
 					p->t_reg = get_register(rt);
 					p->t_reg_no = get_register_no(rt);	
@@ -321,8 +340,7 @@ parsed_instruction* parse_instruction(char* statement)
 				get_label = strtok_r(s, d, &s);
 				if (get_label == NULL)
 				{
-					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read label\n");
-					exit(1);	
+					error("Couldn't read label");
 				}
 				strcpy(p->label, get_label);
 				if (verbose) printf(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);	
@@ -333,8 +351,9 @@ parsed_instruction* parse_instruction(char* statement)
 				rt = strtok_r(s, d, &s);
 				if (rt == NULL)
 				{
-					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register t\n");
-					exit(1);
+					// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register t\n");
+					// exit(1);
+					error("Couldn't read register t");
 				}
 				p->t_reg = get_register(rt);
 				p->t_reg_no = get_register_no(rt);			
@@ -346,8 +365,9 @@ parsed_instruction* parse_instruction(char* statement)
 					rs = strtok_r(s, d, &s);
 					if (rs == NULL)
 					{
-						printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
-						exit(1);
+						// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
+						// exit(1);
+						error("Couldn't read register s");
 					}
 					p->s_reg = get_register(rs);
 					p->s_reg_no = get_register_no(rs);
@@ -357,16 +377,23 @@ parsed_instruction* parse_instruction(char* statement)
 				imm = strtok_r(s, d, &s);
 				p->imm = str_to_int(imm);
 				if (verbose) printf(ANSI_COLOR_CYAN "%s " ANSI_COLOR_RESET, imm);
-				break;
-
 			}
-
+			break;
 
 		case J_instruction:
-			// todo: handle this still
-			// printf("J instruction: %s\n", expr);
-			// printf("Currect s: %s\n", s);
+			;	// <- hack, can't have declaration right after label??
+			char* get_label;
+			get_label = strtok_r(s, d, &s);
+			if (get_label == NULL)
+			{
+				// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read label\n");
+				// exit(1);	
+				error("Couldn't read label");
+			}
+			strcpy(p->label, get_label);
+			if (verbose) printf(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);	
 			break;
+
 		default:
 			break;
 	}
@@ -380,6 +407,19 @@ void execute_instruction(parsed_instruction* p)
 {
 	// todo: check to make sure target is not $zero!
 	if (display_instructions) print_instruction(p);
+
+	if (p->type == J_instruction)
+	{
+		switch(p->opcode)
+		{
+			case J:
+				_j(p->label);
+				break;
+			case JAL:
+				_jal(p->label);
+				break;
+		}
+	}
 
 	if (p->type == P_instruction)
 	{
@@ -1161,3 +1201,25 @@ void print_instruction(parsed_instruction* p) {
 	printf("------------------------------\n");
 
 }
+
+// helper functions here!
+
+int get_line_from_labels(char* search_label)
+{
+	if (debug) print_labels();
+	label_list *curr = labels;
+	while (curr != NULL)
+	{
+		if (strcmp(curr->label, search_label) == 0)
+		{
+			return curr->source_line;
+		}
+
+		curr = curr->next;
+	}
+
+	char err_msg[128];
+	sprintf(err_msg, "Cannot find label %s", search_label);
+	error(err_msg);
+}
+

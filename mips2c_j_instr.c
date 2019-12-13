@@ -5,12 +5,13 @@
 
 #include "mips2c.h"
 
-void _j(int32_t *pc)
+void _j(char* label)
 {
-	// todo: deal with this and the program counter somehow
+	pc = get_line_from_labels(label);
 }
 
-void _jal(int32_t *pc)
+void _jal(char* label)
 {
-	// todo: deal with this and the program counter somehow
+	registers[_$RA] = pc + 1;
+	pc = get_line_from_labels(label);
 }

@@ -4,8 +4,6 @@
 */
 
 #include "mips2c.h"
-// helper
-int get_line_from_labels(char* search_label);
 
 void _beq(int32_t *s, int32_t* t, char* label)
 {
@@ -132,21 +130,21 @@ void _sw(int32_t *t, int32_t* s, int32_t offset)
 }
 
 
-// helper functions here!
+// // // helper functions here!
 
-int get_line_from_labels(char* search_label)
-{
-	// print_labels();
-	label_list *curr = labels;
-	while (curr != NULL)
-	{
-		if (strcmp(curr->label, search_label) == 0)
-		{
-			return curr->source_line;
-		}
-		// printf("label: %s line number: %d\n", curr->label, curr->source_line);
-		curr = curr->next;
-	}
-	printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET ": Cannot find label %s\n", search_label);
-	exit(1);
-}
+// int get_line_from_labels(char* search_label)
+// {
+// 	// print_labels();
+// 	label_list *curr = labels;
+// 	while (curr != NULL)
+// 	{
+// 		if (strcmp(curr->label, search_label) == 0)
+// 		{
+// 			return curr->source_line;
+// 		}
+// 		// printf("label: %s line number: %d\n", curr->label, curr->source_line);
+// 		curr = curr->next;
+// 	}
+// 	printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET ": Cannot find label %s\n", search_label);
+// 	exit(1);
+// }
