@@ -1,7 +1,9 @@
 # from: https://raw.githubusercontent.com/atorres1929/MIPS-BubbleSort/master/bubble_sort.asm
 #
       .data
-nums: .word   0 : 12        # "array" of 12 words to contain values
+#nums: .word   0 : 12        # "array" of 12 words to contain 
+nums: .word 0
+values
 size: .word  12             # size of "array" 
       .text
       la $s0, nums
@@ -165,8 +167,8 @@ bubblesort: # int[] arr(a0), int n(a1)
 #########  don't touch anything below this line!!!!
 
       .data
-space:.asciiz  " "          # space to insert between numbers
-head: .asciiz  "Sorted array:\n"
+space:.asciiz " "
+head: .asciiz "Sorted array:\n"
       .text
 print:add  $s0, $zero, $a0  # starting address of array
       add  $t1, $zero, $a1  # initialize loop counter to array size

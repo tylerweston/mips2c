@@ -5,6 +5,10 @@
 	"I should probably be studying..."
 
 	todo:
+		- comments that end ascii lines are not handled
+		  properly
+		- if there is more than one space between var name
+		  and quotation
 		- problem with lines that have both # and : in them, being interpreted as labels!
 		  ignore lines that the first char is a # !
 		- this memory stuff is getting better but still not great, can't read or
@@ -167,11 +171,8 @@ program get_program(char* filename)
 {
 	parser_state p_state;
 	p_state = TEXT_STATE;
-	// TODO: This will become a state machine that switches between
-	// .data and .text mode, since : means different things in different states
-	// ie, when we are data mode, we want to store labels as pointers or something
-	// like that so that we can use them directly
-	int data_segment_offset = 0;	// track where we are in our data segment
+
+	int data_segment_offset = 0;	// track where we are in memory
 
 	// TODO: MAYBE move all prints to stderr to stdout (??)
 	// taken & edited from stackoverflow!
@@ -234,14 +235,17 @@ program get_program(char* filename)
 	        break;
 	    }
 
+	    // remove white space from start of line:
+	    while (isspace(line_parse[0]))
+	    {
+	    	line_parse++;
+	    }
+
 	    if (line_parse[0] == '#')	// this entire line is a comment, ignore it
 	    {
 	    	continue;
 	    }
 
-	    // todo: RIGHT NOW THIS ONLY HANDLES LABELS THAT ARE ON A SEPARATE LINE!!
-	    // Lines can have format LABEL: INSTRUCTIONS #COMMENTS
-	    // ALSO todo, we want to strip white space from start of line!
 	    // todo: make sure we haven't tried to store the same label twice,
 	    //		 this would probably boink things up!
 	    if (strchr(line_parse, ':') != NULL)
@@ -333,15 +337,45 @@ program get_program(char* filename)
 
 		    	while(1)	// memory label parse state machine
 		    	{
+		    		// if (d_state == 0)
+		    		// {
+		    		// 	if (*p != ' ')
+		    		// 	{
+		    		// 		// this should be a space before label
+		    		// 		warning("Expected space here");
+		    		// 	}
+		    		// 	d_state++;	//don't increment p to
+		    		// 				// check if we're a . next
+		    		// 	// p++;
+		    		// }
+		    		// else 
+		    		// if (d_state == 1)
+		    		// {
+		    		// 	if (*p != '.')
+		    		// 	{
+		    		// 		// we need a .
+		    		// 		error("Expected . before data type");
+		    		// 	}
+		    		// 	d_state++;
+		    		// 	p++;
+		    		// } 
 		    		if (d_state == 0)
 		    		{
-		    			if (*p != ' ')
+		    			if (*p == ' ')
 		    			{
-		    				// this should be a space before label
-		    				warning("Expected space here");
+		    				d_state++;
+		    				p++;
 		    			}
-		    			d_state++;
-		    			p++;
+		    			else
+		    			if (*p == '.')
+		    			{
+		    				d_state = 2;
+		    				p++;
+		    			}
+		    			else
+		    			{
+		    				error("Expected space or . ");		    				
+		    			}
 		    		}
 		    		else 
 		    		if (d_state == 1)
@@ -465,11 +499,20 @@ program get_program(char* filename)
 		    		case _BYTE:
 		    		case _WORD:
 		    		case _HALF:
+			   //  		char mychars[10];
+						// int * intlocation = (int*)(&mychar[5]);
+						// *intlocation = 3632; // stores 3632
 		    			// check if we're a char
+		    			
+		    			// v = str_to_int(value);
+		    			// node->mem_address = data_segment_offset;
+		    			// write_memory(&v, memory + data_segment_offset, sizeof(v));
+		    			// data_segment_offset += sizeof(v);
 		    			v = str_to_int(value);
 		    			node->mem_address = data_segment_offset;
-		    			write_memory(&v, memory + data_segment_offset, sizeof(v));
-		    			data_segment_offset += sizeof(v);
+		    			int* store_loc = (int*)(&memory[data_segment_offset]);
+		    			*store_loc = v;
+
 		    			break;
 
 		    		default:
@@ -530,7 +573,7 @@ program get_program(char* filename)
 	    	program.source[i][k++] = line_parse[j];
 	    }
 
-	    free(line_parse);		// deal with memory leaks if we can
+	    // free(line_parse);		// deal with memory leaks if we can
 
 	    program.source[i][k] = '\0';
 

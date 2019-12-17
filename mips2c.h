@@ -16,7 +16,7 @@
 
 #define MAX_LABEL_LENGTH 32	// max # of chars allowed per label //should this be diff for strings now?
 #define MAX_STR_LENGTH 64
-#define MEMORY_SIZE 256
+#define MEMORY_SIZE 512
 
 // macros  for regiters
 #define _$0 0
