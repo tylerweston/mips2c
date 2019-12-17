@@ -14,8 +14,9 @@
 
 // defines
 
-#define MAX_LABEL_LENGTH 16	// max # of chars allowed per label
-#define MEMORY_SIZE 1024
+#define MAX_LABEL_LENGTH 32	// max # of chars allowed per label //should this be diff for strings now?
+#define MAX_STR_LENGTH 64
+#define MEMORY_SIZE 256
 
 // macros  for regiters
 #define _$0 0
@@ -188,7 +189,7 @@ typedef struct{
 	char* label;
 	data_types data_type;
 	int source_line;
-	char* mem_ptr;
+	int mem_address;
 	struct labels_list* next;
 } label_list;
 

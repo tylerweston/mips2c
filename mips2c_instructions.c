@@ -42,7 +42,6 @@ parsed_instruction* parse_instruction(char* statement)
 	if ((strcmp(statement, " ") == 0) ||
 		(statement[0] == 0))
 	{
-		// if (display_warnings) printf(ANSI_COLOR_CYAN "Warning" ANSI_COLOR_RESET ": parse_instruction got blank statement\n");
 		warning("parse_instruction got blank statement");
 		return NULL;
 	}
@@ -63,18 +62,6 @@ parsed_instruction* parse_instruction(char* statement)
 	// t register: target
 	// d register: destination
 
-	// if (verbose) 
-	// {
-	// 	if (strchr(expr, ':') != NULL) {
-	// 		printf(ANSI_COLOR_BRIGHT_YELLOW);
-	// 	}
-	// 	else
-	// 	{
-	// 		printf(ANSI_COLOR_BRIGHT_GREEN);
-	// 	}
-	// 	printf("%s " ANSI_COLOR_RESET, expr);
-	// }
-
 	if (strchr(expr, ':') != NULL) 
 	{
 		if (verbose)
@@ -82,15 +69,16 @@ parsed_instruction* parse_instruction(char* statement)
 			printf(ANSI_COLOR_BRIGHT_YELLOW);
 			printf("%s " ANSI_COLOR_RESET, expr);
 		}
-		// printf("\n");
-		// return NULL;	//we're just a label, skip us (FIGURE OUT A BETTER WAY TO DO THIS!)
-		// printf("current s: %s\n",s);
 
 		expr = strtok_r(s, d, &s);
-		if (expr == NULL) return NULL;
+		if (expr == NULL) 
+		{
+			if (verbose) printf("\n");
+			return NULL;
+		}
 	}
 
-	if (verbose)
+	if (strchr(expr, '.') == NULL && (verbose))
 	{
 				printf(ANSI_COLOR_BRIGHT_GREEN);
 				printf("%s " ANSI_COLOR_RESET, expr);	
@@ -98,7 +86,6 @@ parsed_instruction* parse_instruction(char* statement)
 
 	parsed_instruction* p = malloc (sizeof(parsed_instruction) + MAX_LABEL_LENGTH + 5);
 	p->instruction = malloc(strlen(expr)+1);
-	// p->instruction = strdup(expr);
 	strcpy(p->instruction, expr);
 	p->type = get_instruction_type(expr);
 	p->opcode = get_opcode(expr);
@@ -133,7 +120,8 @@ parsed_instruction* parse_instruction(char* statement)
 	{
 		if (expr[0] == '.')
 		{
-			printf(ANSI_COLOR_BRIGHT_CYAN "%s\n" ANSI_COLOR_RESET, expr);
+			printf(ANSI_COLOR_BRIGHT_CYAN "%s " ANSI_COLOR_RESET, expr);
+			printf(ANSI_COLOR_YELLOW "%s\n" ANSI_COLOR_RESET, s);
 			return NULL;
 		}
 	}
@@ -145,10 +133,9 @@ parsed_instruction* parse_instruction(char* statement)
 	switch (p->type)
 	{
 		case none:
+			// if (verbose) printf("\n");
+			if (display_warnings) warning("Have none instruction");
 			return NULL;
-			// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET ":\nHave none instruction type!\n");
-			// exit(1);
-			// break;
 
 		case P_instruction:
 			if (strcmp(expr, "move") == 0 ||
@@ -183,8 +170,7 @@ parsed_instruction* parse_instruction(char* statement)
 				toke = strtok_r(s, d, &s);
 				if (toke == NULL)
 				{
-					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register t\n");
-					exit(1);
+					error("Couldn't read register");
 				}
 				if (strcmp(expr, "li") == 0)
 				{
@@ -202,12 +188,12 @@ parsed_instruction* parse_instruction(char* statement)
 
 				char* get_label;
 				get_label = strtok_r(s, d, &s);
+				
 				if (get_label == NULL)
 				{
-					printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read label\n");
-					exit(1);	
+					error("Couldn't read label");
 				}
-				// p->label = strdup(get_label);
+
 				if (strcmp(expr, "la") == 0)
 				{
 					strcpy(p->label, get_label);
@@ -226,8 +212,6 @@ parsed_instruction* parse_instruction(char* statement)
 		case R_instruction:
 
 			// todo: how to grab shift amount?
-
-			// printf("Currect s: %s\n", s);
 			if (strcmp(expr, "syscall") == 0)
 			{
 				break;
@@ -268,10 +252,7 @@ parsed_instruction* parse_instruction(char* statement)
 			break;
 
 		case I_instruction:
-			// printf(ANSI_COLOR_GREEN "%s\n" ANSI_COLOR_RESET, expr);
-			// printf("Currect s: %s\n", s);
 
-			// if we are beq, bne, blez, or bgtz we want s first, then t
 			if (strcmp(expr, "sw") == 0 ||
 				strcmp(expr, "lw") == 0)
 			{
@@ -293,8 +274,6 @@ parsed_instruction* parse_instruction(char* statement)
 				rs = strtok_r(s, ")", &s);
 				if (rs == NULL)
 				{
-					// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
-					// exit(1);
 					error("Couldn't read register s");
 				}
 
@@ -314,8 +293,6 @@ parsed_instruction* parse_instruction(char* statement)
 				rs = strtok_r(s, d, &s);
 				if (rs == NULL)
 				{
-					// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
-					// exit(1);
 					error("Couldn't read register s");
 				}
 				p->s_reg = get_register(rs);
@@ -327,8 +304,6 @@ parsed_instruction* parse_instruction(char* statement)
 					rt = strtok_r(s, d, &s);
 					if (rt == NULL)
 					{
-						// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register t\n");
-						// exit(1);
 						error("Couldn't read register t");
 					}
 					p->t_reg = get_register(rt);
@@ -347,12 +322,9 @@ parsed_instruction* parse_instruction(char* statement)
 			} 
 			else 
 			{
-
 				rt = strtok_r(s, d, &s);
 				if (rt == NULL)
 				{
-					// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register t\n");
-					// exit(1);
 					error("Couldn't read register t");
 				}
 				p->t_reg = get_register(rt);
@@ -365,8 +337,6 @@ parsed_instruction* parse_instruction(char* statement)
 					rs = strtok_r(s, d, &s);
 					if (rs == NULL)
 					{
-						// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read register s\n");
-						// exit(1);
 						error("Couldn't read register s");
 					}
 					p->s_reg = get_register(rs);
@@ -386,8 +356,6 @@ parsed_instruction* parse_instruction(char* statement)
 			get_label = strtok_r(s, d, &s);
 			if (get_label == NULL)
 			{
-				// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET":\nCouldn't read label\n");
-				// exit(1);	
 				error("Couldn't read label");
 			}
 			strcpy(p->label, get_label);
@@ -414,10 +382,10 @@ void execute_instruction(parsed_instruction* p)
 		{
 			case J:
 				_j(p->label);
-				break;
+				return;
 			case JAL:
 				_jal(p->label);
-				break;
+				return;
 		}
 	}
 
@@ -522,7 +490,6 @@ void execute_instruction(parsed_instruction* p)
 			case SUB:
 				_sub(p->d_reg, p->s_reg, p->t_reg);
 				break;
-
 		}
 	}	
 	else
@@ -684,8 +651,6 @@ instruction_type get_instruction_type(char* expr)
 int get_funct(char* expr)
 {
 	// return function number for r-instructions
-
-
 	if (strcmp(expr, "add") == 0)
 	{
 		return ADD;
@@ -746,21 +711,86 @@ int get_funct(char* expr)
 	{
 		return SLT;
 	}
-// return SRA;
-// return SLLV;
-// return SRLV;
-// return SRAV;
-// return JR;
-// return JALR;
-// return MFHI;
-// return MTHI;
-// return MFLO;
-// return MTLO;
-// return MULTU;
-// return DIV;
-// return DIVU;
-// return ADDU;
-// return SUBU;
+
+	if (strcmp(expr,"sra") == 0)
+	{
+		return SRA;
+	}
+
+	if (strcmp(expr,"sllv") == 0)
+	{
+		return SLLV;
+	}
+
+	if (strcmp(expr,"srlv") == 0)
+	{
+		return SRLV;
+	}
+
+	if (strcmp(expr,"srav") == 0)
+	{
+		return SRAV;
+	}
+
+	if (strcmp(expr,"jr") == 0)
+	{
+		return JR;
+	}
+
+	if (strcmp(expr,"jal") == 0)
+	{
+		return JAL;
+	}
+
+	if (strcmp(expr,"jalr") == 0)
+	{
+		return JALR;
+	}
+
+	if (strcmp(expr,"mfhi") == 0)
+	{
+		return MFHI;
+	}
+
+	if (strcmp(expr,"mthi") == 0)
+	{
+		return MTHI;
+	}
+
+	if (strcmp(expr,"mflo") == 0)
+	{
+		return MFLO;
+	}
+
+	if (strcmp(expr,"mtlo") == 0)
+	{
+		return MTLO;
+	}
+
+	if (strcmp(expr,"multu") == 0)
+	{
+		return MULTU;
+	}
+
+	if (strcmp(expr,"div") == 0)
+	{
+		return DIV;
+	}
+
+	if (strcmp(expr,"divu") == 0)
+	{
+		return DIVU;
+	}
+
+	if (strcmp(expr,"addu") == 0)
+	{
+		return ADDU;
+	}
+
+	if (strcmp(expr,"subu") == 0)
+	{
+		return SUBU;
+	}
 
 // return SLTU;
 	return NONE;	// error OPCODE, something went wrong!
@@ -970,7 +1000,6 @@ int get_num_args(char* expr)
 		return 1;
 	}
 
-
 	if (strcmp(expr, "mthi") == 0)
 	{
 		return 1;
@@ -980,7 +1009,6 @@ int get_num_args(char* expr)
 	{
 		return 1;
 	}
-
 
 	if (strcmp(expr, "mtlo") == 0)
 	{
@@ -1168,7 +1196,6 @@ void print_instruction(parsed_instruction* p) {
 
 	printf("------------------------------\n");
 	printf("instruction name: \t%s\n", p->instruction);
-	// printf("%s\n", p->instruction);
 	printf("Instruction type: \t");
 
 	switch(p->type)
@@ -1186,7 +1213,7 @@ void print_instruction(parsed_instruction* p) {
 			printf("pseudoinstruction\n");
 			break;
 		case none:
-			printf("none!\n");
+			printf("none\n");
 			break;
 	}
 

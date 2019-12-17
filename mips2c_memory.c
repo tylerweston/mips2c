@@ -29,8 +29,9 @@ void print_memory()
 	printf("------------------\n");
 	for (int x = 0; x < MEMORY_SIZE; x++)
 	{
-		if (x % 16 == 0) printf("\n%d:", x);
+		if (x % 16 == 0) printf(ANSI_COLOR_BRIGHT_GREEN "\n%d:" ANSI_COLOR_RESET, x);
 		if (x % 4 == 0) printf("\t");
 		printf("%c", memory[x]);
 	}
+	printf("\n");
 }

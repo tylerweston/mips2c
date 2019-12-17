@@ -5,6 +5,8 @@
 	"I should probably be studying..."
 
 	todo:
+		- problem with lines that have both # and : in them, being interpreted as labels!
+		  ignore lines that the first char is a # !
 		- this memory stuff is getting better but still not great, can't read or
 		  write stuff efficiently! spin this off into a smaller test file and
 		  play around with it more!
@@ -35,8 +37,6 @@
 		- LOTS of refactoring to do, especially those gross giant function switch blocks
 		  to get information about them! store it in some sort of dictionary or hashmap or
 		  something!
-		- lines that are formatted a bit differently
-			- ie handle LABEL: INSTRUCTIONS
 		- need a way to handle memory reads/writes, ie 40($s0)
 			- memory addresses should just be pointers into a memory array?
 		- what to do with pseudoinstructions? process first into atomic expr? or just use direct?
@@ -46,11 +46,6 @@
 		- clean up makefile - depend on headers
 		- figure out whats up with incompatible pointer types with linked list for labels
 		- probably memory leaks EVERYWHERE! need to make sure we clean them up!
-		- make it so we can store pointers to memory addresses and put this information
-		  in memory somewhere!
-			- ie, keep a linked list of labels to areas of memory where we've stored
-			  this information. if we get a string, just crawl memory until we find a \0??
-			  (HOW DOES MIPS KNOW HOW LONG A STRING IS?)
 
 	references used:
 		https://www.student.cs.uwaterloo.ca/~cs241/mips/mipsref.pdf
@@ -92,15 +87,12 @@ int main(int argc, char *argv[])
 
 	parse_arguments(argc, argv, &filename);
 
-	if (debug) printf("Parsing file: %s\n", program.filename);
-
-	program = get_program(filename);
-	
 	if (debug) printf("Setting up memory\n");
-
-	memory = malloc(MEMORY_SIZE);
 	clear_memory();						// also sets $SP and data offset for dataseg
 
+	if (debug) printf("Parsing file: %s\n", program.filename);
+	program = get_program(filename);
+	
 	pc = 0;
 	bool finished = false;
 	char* statement;
@@ -322,7 +314,7 @@ program get_program(char* filename)
 		    	int k = 0;
 		    	data_types d_type;
 		    	char* p = strdup(strchr(line_parse, ':'));
-		    	char* value = malloc(MAX_LABEL_LENGTH);
+		    	char* value = malloc(MAX_STR_LENGTH);
 		    	p++;	// p should now point to a space
 		    	int d_state = 0;
 		    	int data_size = 0;	// in bits! (/8 for size in char)
@@ -458,26 +450,16 @@ program get_program(char* filename)
 		    			value++;
 
 		    			// write to mem
-		    			node->mem_ptr = data_segment_offset;
-		    			int wlen = strlen(value);
-		    			if (d_type == _ASCII)
+		    			node->mem_address = data_segment_offset;
+		    			int wlen = strlen(value) + 1;	//+1 to account for null terminator
+		    			if (debug) printf("Found string: %s\n", value);
+		    			for (int wi = 0; wi < wlen; wi++)
 		    			{
-		    				wlen--;	// don't write final 0 if we're just an ascii
+		    				char c = value[wi];
+		    				if (c == 0 && d_type == _ASCII) break;
+		    				write_memory(&c, memory + data_segment_offset + wi, 1);
 		    			}
-		    			// todo: does this really work?
-		    			write_memory(value, memory + data_segment_offset, wlen);
 		    			data_segment_offset += wlen;
-		    			// or write one char at a time?
-		    			// for (int wr=0; wr < strlen(value); wr++)
-		    			// {
-		    			// 	write_memory(value[wr], data_segment + data_segment_offset, 1);
-		    			// 	data_segment_offset++;
-		    			// }
-		    			// if (d_type == _ASCIIZ)
-		    			// {
-		    			// 	write_memory(0, data_segment + data_segment_offset, 1);
-		    			// 	data_segment_offset++;
-		    			// }
 		    			break;
 
 		    		case _BYTE:
@@ -485,7 +467,7 @@ program get_program(char* filename)
 		    		case _HALF:
 		    			// check if we're a char
 		    			v = str_to_int(value);
-		    			node->mem_ptr = data_segment_offset;
+		    			node->mem_address = data_segment_offset;
 		    			write_memory(&v, memory + data_segment_offset, sizeof(v));
 		    			data_segment_offset += sizeof(v);
 		    			break;
@@ -626,7 +608,7 @@ void display_usage(bool full)
 	printf("   ./mip2c -l filename\n");
 	printf("        loads and executes a file.\n");
 	printf("		-h to see all commands\n");
-	if (!full)
+	if (!full)	// display just basic help
 	{ 
 		exit(0);
 	}
@@ -675,8 +657,8 @@ void print_labels()
 		}
 		else
 		{
-			printf("label: %s\t\ttype: %s\n", curr->label, 
-				data_type_labels[curr->data_type]);
+			printf("label: %s\t\ttype: %s\n address: %d\n", curr->label, 
+				data_type_labels[curr->data_type], curr->mem_address);
 		}
 		curr = curr->next;
 	}

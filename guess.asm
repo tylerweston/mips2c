@@ -1,7 +1,12 @@
 #guessing game
+.data
+intro: .asciiz "Please guess a number between one and one hundred\n"
 .text
 start:
 li $t0, 57              # $t0 contains the number to guess!
+ori $v0, $0, 4
+la $a0, intro
+syscall	
 guessagain:
 li $v0, 11
 li $a0, 58

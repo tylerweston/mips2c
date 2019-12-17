@@ -82,20 +82,18 @@ void _b(char* label)
 
 char* get_memptr_from_labels(char* search_label)
 {
-	// print_labels();
 	label_list *curr = labels;
 	while (curr != NULL)
 	{
 		if (strcmp(curr->label, search_label) == 0)
 		{
-			return curr->mem_ptr;
+			return curr->mem_address;
 		}
-		// printf("label: %s line number: %d\n", curr->label, curr->source_line);
 		curr = curr->next;
 	}
+
 	char err[128];
 	sprintf(err, "Cannot find label %s", search_label);
 	error(err);
-	// printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET ": Cannot find label %s\n", search_label);
-	// exit(1);
+
 }

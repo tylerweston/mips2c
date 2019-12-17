@@ -76,22 +76,38 @@ void _print_string()
 	//	- grab pointer to mem address from $a0
 	//	- iterate over each char, if it is 0, break and return
 	//  - if it is not, just display that character
-	printf("I'm gonna print a string!");
+	// printf("I'm gonna print a string!");
 	int addr = read_register(registers, _$A0);
 	int ind = 0;
-	printf("got addrs %d\n", addr);
-	char* c = malloc(1);
+	// printf("got addrs %d\n", addr);
+	char c;
 	while(1)
 	{
-		memcpy(c, memory + addr + ind, 1);
+		c = memory[addr + ind];
 		ind++;
-		printf("got char: %c\n", *c);
-		if (*c == 0)
+		if (c == '\\')
+		{
+			// todo: better way to parse escape chars?
+			char c2 = memory[addr + ind];
+			if (c2 == 'n')
+			{
+				c = '\n';
+				ind++;
+			}
+			if (c2 == 't')
+			{
+				c = '\t';
+				ind++;
+			}
+		}
+
+		printf("%c", c);
+		if (c == 0)
 		{
 			break;
 		}
 	}
-	free(c);
+	// free(c);
 }
 
 void _read_string()
@@ -104,11 +120,13 @@ void _read_string()
 	sprintf(format, "%%%ds", max_len);
 	char* in_string = malloc(max_len + 1);	// todo: change this to not hardcoded
 	scanf(format, in_string);
-	printf("read string: %s\n", in_string);
-	printf("in buff addr: %d\n", in_buff_addr);
-	// write to heap + some offset? Is this how this works?
-	write_memory(in_string, memory + in_buff_addr, max_len);
-	// strcpy(memory + in_buff_addr, in_string);
+	int wlen = strlen(in_string) + 1;
+	for (int wi = 0; wi < wlen; wi++)
+	{
+		char c = in_string[wi];
+		write_memory(&c, memory + in_buff_addr + wi, 1);
+	}
+	free(in_string);
 }
 
 void _print_int()

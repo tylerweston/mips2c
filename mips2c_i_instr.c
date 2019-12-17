@@ -104,7 +104,18 @@ void _lhu(int32_t *t, int32_t* s, int32_t offset)
 
 void _lw(int32_t *t, int32_t* s, int32_t offset)
 {
-	*t = *s + offset;
+// 	Description:
+
+// A word is loaded into a register from the specified address.
+
+// Operation:
+
+// $t = MEM[$s + offset]; advance_pc (4);
+
+// Syntax:
+
+// lw $t, offset($s)
+	*t = memory[*s + offset];
 }
 
 void _lui(int32_t *t, int32_t offset)
@@ -126,7 +137,8 @@ void _sw(int32_t *t, int32_t* s, int32_t offset)
 {
 	// s will be a POINTER into memory somewhere!
 	// (our HEAP)
-	*t = *s + offset;
+	// *t = memory[*s + offset];
+	memory[*s + offset] = *t;
 }
 
 
