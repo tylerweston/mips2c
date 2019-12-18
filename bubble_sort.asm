@@ -123,20 +123,21 @@ bubblesort: # int[] arr(a0), int n(a1)
       	
       	add $t0, $zero, $zero   # target
       	slt $t0, $t4, $t2	# arr[j+1] < arr[j]
-      	bne $t0, 1, endif	# if slt NOT true, end of if
+            li $t7, 1
+      	bne $t0, $t7, endif	# if slt NOT true, end of if
       	sw $t2, 0($t3)		# swap j and j+1 -> j goes into j + 1 (address location)
       	sw $t4, 0($t1)		# swap j+1 and j -> j + 1 goes into j (address location)
       endif:
       ##################################################################
       # RECURSIVE CALL
       	addi $s1, $s1, 1	# increment j
-      	j while			# jump to the top of the loop
+      	j while           # jump to the top of the loop
       done:
       ######################################
       # SAVE $a registers, $ra
       ######################################
       	addi $sp, $sp, -12	
-	sw $a0 0($sp)				
+	      sw $a0 0($sp)				
       	sw $a1 4($sp)				
       	sw $ra 8($sp)				
       ######################################
@@ -146,11 +147,11 @@ bubblesort: # int[] arr(a0), int n(a1)
       ######################################
       # jal
       ######################################
-        jal bubblesort
+            jal bubblesort
       ######################################
       # RELOAD $a registers, $ra
       ######################################
-        lw $a0, 0($sp)			
+            lw $a0, 0($sp)			
       	lw $a1, 4($sp)			
       	lw $ra, 8($sp)			
       	addi $sp, $sp, 12		
@@ -173,7 +174,8 @@ space:.asciiz " "
 head: .asciiz "Sorted array:\n"
       .text
 print:add  $s0, $zero, $a0  # starting address of array
-      add  $t1, $zero, $a1  # initialize loop counter to array size
+      #add  $t1, $zero, $a1  # initialize loop counter to array size
+      li $t1, 12 # THIS SHOULDN'T BE HARDCODED
       la   $a0, head        # load address of print heading
       li   $v0, 4           # specify Print String service
       syscall               # print heading
@@ -186,7 +188,7 @@ out:  lw   $a0, 0($s0)      # load number for syscall
       addi $s0, $s0, 4      # increment address
       addi $t1, $t1, -1     # decrement loop counter
       bgtz $t1, out         # repeat if not finished
-      jr   $ra              # return
+      # jr   $ra              # return, for now just exit off end?
 ########################################################################
 .data
 nums: .word  0

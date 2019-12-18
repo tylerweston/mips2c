@@ -162,13 +162,13 @@ void _nor(int32_t *d, int32_t* s, int32_t* t)
 void _slt(int32_t *d, int32_t* s, int32_t* t)
 {
 	// signed
-	*d = (*s < *t) ? 1 : 0;
+	*d = *s < *t;
 }
 
 void _sltu(int32_t *d, int32_t* s, int32_t* t)
 {
 	// unsigned
-	*d = (*s < *t) ? 1 : 0;
+	*d = *s < *t;
 }
 
 

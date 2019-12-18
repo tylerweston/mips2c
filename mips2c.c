@@ -21,7 +21,6 @@
 		  write stuff efficiently! spin this off into a smaller test file and
 		  play around with it more!
 		- .align directive
-		- SW, LW, JR
 		- test SLT
 		- switch all error messages over to error function
 		- parsing data section still seems brittle! look into this and test more!
@@ -151,6 +150,7 @@ void exit_info() {
 	// diagnostic stuff, etc.
 	if (display_registers) print_registers(registers);
 	if (display_memory) print_memory();
+	printf(ANSI_COLOR_RESET "\n");	// flush stuff out just in case
 }
 
 
