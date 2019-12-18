@@ -88,7 +88,8 @@ size: .word  12             # size of "array"
 bubblesort: # int[] arr(a0), int n(a1) 
       ##################################################################
       # IF STATEMENT
-      beq $a1, 1, endsort 	# if n == 1 then goto over
+      li $t7, 1
+      beq $a1, $t7, endsort 	# if n == 1 then goto over
       ############################
       # RETURN FROM FUNCTION
       ############################
@@ -103,7 +104,8 @@ bubblesort: # int[] arr(a0), int n(a1)
         addi $s2, $a1, -1  	# n - 1
       while:			# while
       	slt $t0, $s1, $s2	# j < n-1
-      	bne $t0, 1, done	# if j < n - 1 THEN continue, else GOTO done
+            li $t7, 1
+      	bne $t0, $t7, done	# if j < n - 1 THEN continue, else GOTO done
       	
       	# Need arr[j] -> index = j * 4 so IF j = 4 THEN index = 16 (remember word size is 4)
       	add $t1, $s1, $s1	# t1 = j + j
@@ -144,7 +146,7 @@ bubblesort: # int[] arr(a0), int n(a1)
       ######################################
       # jal
       ######################################
-        jal bubblesort     		# call bubblesort again
+        jal bubblesort
       ######################################
       # RELOAD $a registers, $ra
       ######################################

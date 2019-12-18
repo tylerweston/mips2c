@@ -62,6 +62,7 @@ void _mtlo(int32_t *s)
 
 void _jr(int32_t* s)
 {
+	
 	pc = *s;	// *s must be a multiple of 4 (THIS ISN'T HOW PC WORKS)
 }
 

@@ -37,7 +37,9 @@ int32_t instruction_to_machine_code(parsed_instruction* p)
 parsed_instruction* parse_instruction(char* statement)
 {
 	// Given a statement, parse it to return a parsed_instruction
-	if (debug) printf("Parsing instruction %s\n", statement);
+	if (debug) {
+		printf(ANSI_COLOR_BRIGHT_RED "> " ANSI_COLOR_RESET"%s\n", statement);
+	}
 	// if we ever get a blank statement, throw a warning
 	if ((strcmp(statement, " ") == 0) ||
 		(statement[0] == 0))
@@ -126,14 +128,10 @@ parsed_instruction* parse_instruction(char* statement)
 		}
 	}
 
-
-	// TODO: LI and LA should be implemented next!
-	// so we can begin testing out string stuff!
-
 	switch (p->type)
 	{
 		case none:
-			// if (verbose) printf("\n");
+			if (verbose) printf("\n");
 			if (display_warnings) warning("Have none instruction");
 			return NULL;
 
@@ -218,6 +216,18 @@ parsed_instruction* parse_instruction(char* statement)
 			}
 
 			// todo: better way to split up these registers!! different instructions assign registers in different ways!
+			if (strcmp(expr, "jr") == 0)
+			{
+				rs = strtok_r(s, d, &s);
+				if (rs == NULL)
+				{
+					error("Couldn't read register s");
+				}
+				p->s_reg = get_register(rs);
+				p->s_reg_no = get_register_no(rs);
+				if (verbose) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
+				break;
+			}
 
 			// todo: error checking here
 			if (get_num_args(expr) == 3)
@@ -497,6 +507,12 @@ void execute_instruction(parsed_instruction* p)
 		// executing j/i type instructions
 		switch (p->opcode)
 		{
+			// case J:
+			// 	_j(p->label);
+			// 	break;
+			// case JAL:
+			// 	_jal(p->label);
+			// 	break;
 			case BEQ:
 				_beq(p->s_reg, p->t_reg, p->label);
 				break;
@@ -934,6 +950,16 @@ int get_opcode(char* expr)
 	if (strcmp(expr, "sw") == 0)
 	{
 		return SW; 
+	}
+
+	if (strcmp(expr, "jal") == 0)
+	{
+		return JAL;
+	}
+
+	if (strcmp(expr, "j") == 0)
+	{
+		return J;
 	}
 
 	return NONE;

@@ -19,7 +19,7 @@ void clear_memory()
 
 {
 	memset(memory, 0, MEMORY_SIZE);
-	registers[_$SP] = 256;	// clear stack pointer
+	registers[_$SP] = MEMORY_SIZE / 2;	// clear stack pointer
 }
 
 void print_memory()

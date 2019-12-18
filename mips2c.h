@@ -16,7 +16,7 @@
 
 #define MAX_LABEL_LENGTH 32	// max # of chars allowed per label //should this be diff for strings now?
 #define MAX_STR_LENGTH 64
-#define MEMORY_SIZE 512
+#define MEMORY_SIZE 1024
 
 // macros  for regiters
 #define _$0 0
@@ -213,6 +213,8 @@ typedef struct {
 
 // program counter
 int pc;
+int step_number;
+int max_steps;
 
 // todo: MEMORY goes here!
 char* memory[MEMORY_SIZE];
@@ -237,6 +239,8 @@ bool display_instructions;		// show individual parsed instructions
 bool display_registers;			// display registers at end
 bool display_warnings;
 bool display_memory;
+bool display_step_number;
+bool break_max;
 
 label_list* labels;
 
@@ -245,6 +249,7 @@ label_list* labels;
 program get_program(char* filename);
 // int free_program(char** program);
 int str_to_int(char* str);	// just in case atoi is a no go
+void exit_info();
 int align4(int num);
 
 // instructions

@@ -88,24 +88,35 @@ int main(int argc, char *argv[])
 	display_registers = false;			// display registers at end
 	display_warnings = false;
 	display_memory = false;
+	display_step_number = false;
+	break_max = false;
 
 	parse_arguments(argc, argv, &filename);
 
 	if (debug) printf("Setting up memory\n");
 	clear_memory();						// also sets $SP and data offset for dataseg
 
-	if (debug) printf("Parsing file: %s\n", program.filename);
+	if (debug) printf("Parsing file: " ANSI_COLOR_BLUE "%s\n" ANSI_COLOR_RESET, filename);
 	program = get_program(filename);
 	
+	step_number = 0;
 	pc = 0;
 	bool finished = false;
 	char* statement;
 	parsed_instruction* p;
-	char* mem_ptr;
+	// char* mem_ptr;
 
 	do {
 		while (pc < program.lines)
 		{
+			if (break_max)
+			{
+				if (step_number + 1 > max_steps)
+				{
+					break;
+				}
+			}
+			if (display_step_number) printf("[%d]", step_number++);
 			if (verbose) printf(ANSI_COLOR_YELLOW "%d: " ANSI_COLOR_RESET, pc);
 			statement = strdup(program.source[pc]);
 
@@ -122,19 +133,32 @@ int main(int argc, char *argv[])
 
 	} while (!finished);
 
-	if (display_registers) print_registers(registers);
-	if (display_memory) print_memory();
-
+	exit_info();
 	return 0;
 }
+
+void exit_info() {
+	// call this before program ends to do any clean-up,
+	// diagnostic stuff, etc.
+	if (display_registers) print_registers(registers);
+	if (display_memory) print_memory();
+}
+
 
 void parse_arguments(int argc, char* argv[], char** filename)
 {
 	int opt;
-	while ((opt = getopt(argc, argv, "l:vdhriwm")) != -1)
+	while ((opt = getopt(argc, argv, "l:s:vdhriwnm")) != -1)
 	{
 		switch(opt)
 		{
+			case 's':
+				max_steps = str_to_int(optarg);
+				break_max = true;
+				break;
+			case 'n':
+				display_step_number = true;
+				break;
 			case 'm':
 				display_memory = true;
 				break;
@@ -277,7 +301,6 @@ program get_program(char* filename)
 		    	// todo: IF THERE IS MORE OF A LINE HERE, WE NEED TO PARSE IT!!
 		    	// see what else happens here
 
-
 		    	// now add it to a linked list along with it's line number!	    	
 		    	label_list *node = malloc(sizeof(label_list));
 		    	node->label = malloc(sizeof(MAX_LABEL_LENGTH));
@@ -321,7 +344,6 @@ program get_program(char* filename)
 		    	char* value = malloc(MAX_STR_LENGTH);
 		    	p++;	// p should now point to a space
 		    	int d_state = 0;
-		    	int data_size = 0;	// in bits! (/8 for size in char)
 		    	// get label
 		    	char* label_get = malloc(MAX_LABEL_LENGTH);
 		    	int pi;
@@ -425,6 +447,8 @@ program get_program(char* filename)
 	    				else if (strcmp(data_type, "word") == 0)
 	    				{
 	    					// this can also initialize an array
+	    					// THERE IS SPECIAL SYNTAX THAT CAN BE
+	    					// USED HERE
 	    					d_type = _WORD;
 	    				}
 	    				else if (strcmp(data_type, "float") == 0)
@@ -450,7 +474,6 @@ program get_program(char* filename)
 	    				value[k++] = *p;
 		    			if (*p == '\n' || *p == '\r')
 		    			{
-		    				// value[k] = 0;	//don't use this
 		    				break;
 		    			}
 		    			p++;
@@ -463,6 +486,7 @@ program get_program(char* filename)
 		    	node->data_type = d_type;
 		    	node->source_line = i;		// we don't care about this!
 		    	node->next = NULL;
+		    	if (debug) printf(ANSI_COLOR_GREEN "%s " ANSI_COLOR_RESET, node->label);
 
 		    	int32_t v;
 		    	switch (d_type)
@@ -486,7 +510,7 @@ program get_program(char* filename)
 		    			// write to mem
 		    			node->mem_address = data_segment_offset;
 		    			int wlen = strlen(value) + 1;	//+1 to account for null terminator
-		    			if (debug) printf("Found string: %s\n", value);
+		    			if (debug) printf("> string > %s\n", value);
 		    			for (int wi = 0; wi < wlen; wi++)
 		    			{
 		    				char c = value[wi];
@@ -499,16 +523,9 @@ program get_program(char* filename)
 		    		case _BYTE:
 		    		case _WORD:
 		    		case _HALF:
-			   //  		char mychars[10];
-						// int * intlocation = (int*)(&mychar[5]);
-						// *intlocation = 3632; // stores 3632
-		    			// check if we're a char
-		    			
-		    			// v = str_to_int(value);
-		    			// node->mem_address = data_segment_offset;
-		    			// write_memory(&v, memory + data_segment_offset, sizeof(v));
-		    			// data_segment_offset += sizeof(v);
+		    			// todo: test this, I think it's working?
 		    			v = str_to_int(value);
+		    			if (debug) printf("> word > %i\n", v);
 		    			node->mem_address = data_segment_offset;
 		    			int* store_loc = (int*)(&memory[data_segment_offset]);
 		    			*store_loc = v;
@@ -519,19 +536,11 @@ program get_program(char* filename)
 		    			error("Type not supported yet");
 		    			break;
 		    	}
-		    	// todo: round data_Segment_offset to nearest multiple of 4
+
 		    	data_segment_offset = align4(data_segment_offset);
 		    	free(data_type);
 		    	// free(value);		// how do we free this now that it's changed?
 
-		    	// TODO:
-		    	// write out stuff to memory and store a pointer to that
-		    	// memory under mem_ptr!
-		    	// we need a way to keep track of where we are writing to
-		    	// in our data section!
-
-
-		    	
 		    	if (head == NULL)
 		    	{
 		    		head = node;
@@ -552,8 +561,6 @@ program get_program(char* filename)
 		    {
 		    	// todo: what happens here??
 		    }
-		    // do we need to check if (p_state == GLOBAL_STATE) here? this is probably only for compiled progrs?
-
 	    }
 
 	    int k = 0;
@@ -655,11 +662,15 @@ void display_usage(bool full)
 	{ 
 		exit(0);
 	}
+	printf("\nFull help:\n");
 	printf(" -m\t\tdisplay memory\n");
 	printf(" -i\t\tdisplay parsed instructions\n");
 	printf(" -v\t\tverbose mode\n");
 	printf(" -r\t\tdisplay registers\n");
+	printf(" -s steps\thalt after steps iterations\n");
 	printf(" -d\t\tdebug mode\n");
+	printf("\n");
+	printf(ANSI_COLOR_RED "Tyler Weston, 2019/2020\n" ANSI_COLOR_RESET);
 	exit(0);
 }
 
@@ -694,13 +705,14 @@ void print_labels()
 	label_list *curr = labels;
 	while (curr != NULL)
 	{
+		printf(ANSI_COLOR_BRIGHT_YELLOW "> " ANSI_COLOR_RESET);
 		if (curr->data_type == _PC)
 		{
-			printf("label: %s\t\tline number: %d\n", curr->label, curr->source_line);
+			printf("%s\t\tline number: %d\n", curr->label, curr->source_line);
 		}
 		else
 		{
-			printf("label: %s\t\ttype: %s\n address: %d\n", curr->label, 
+			printf("%s\t\ttype: %s\n address: %d\n", curr->label, 
 				data_type_labels[curr->data_type], curr->mem_address);
 		}
 		curr = curr->next;
