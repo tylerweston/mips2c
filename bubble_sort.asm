@@ -2,7 +2,7 @@
 #
       .data
 #nums: .word   0 : 12        # "array" of 12 words to contain 
-nums: .word 0
+
 values
 size: .word  12             # size of "array" 
       .text
@@ -188,4 +188,6 @@ out:  lw   $a0, 0($s0)      # load number for syscall
       bgtz $t1, out         # repeat if not finished
       jr   $ra              # return
 ########################################################################
+.data
+nums: .word  0
 	

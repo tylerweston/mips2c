@@ -178,13 +178,13 @@ void _get_char()
 
 void _do_terminate_no_code()
 {
-	if (display_registers) print_registers(registers);
+	exit_info();
 	exit(0);
 }
 
 void _do_terminate_with_code()
 {
 	int break_result = read_register(registers, _$A0);
-	if (display_registers) print_registers(registers);
+	exit_info();
 	exit(break_result);
 }

@@ -62,7 +62,7 @@ void _mtlo(int32_t *s)
 
 void _jr(int32_t* s)
 {
-	
+
 	pc = *s;	// *s must be a multiple of 4 (THIS ISN'T HOW PC WORKS)
 }
 
@@ -162,13 +162,13 @@ void _nor(int32_t *d, int32_t* s, int32_t* t)
 void _slt(int32_t *d, int32_t* s, int32_t* t)
 {
 	// signed
-	*d = *s < *t;
+	*d = (*s < *t) ? 1 : 0;
 }
 
 void _sltu(int32_t *d, int32_t* s, int32_t* t)
 {
 	// unsigned
-	*d = *s < *t;
+	*d = (*s < *t) ? 1 : 0;
 }
 
 

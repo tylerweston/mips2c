@@ -32,6 +32,9 @@ int32_t instruction_to_machine_code(parsed_instruction* p)
 	//	- Concatenate all bits
 	//	- return this 32bit binary number!
 
+	// to get distance between labels find our current pc and
+	// find the pc to our destination and subtract (??)
+
 }
 
 parsed_instruction* parse_instruction(char* statement)
@@ -117,6 +120,14 @@ parsed_instruction* parse_instruction(char* statement)
 	char* imm;
 	// char* shamt;	<-- will need to grab this once we implement shifted stuff
 	// char* address; <-- do we need this or just label?
+
+	// todo:
+	// we can parse instructions like this
+	// get(**part1, **part2, **part3) (??)
+	// and then pass pointers to reg as args? maybe also have to
+	// specify the type of these parts?
+	// or make a struct that contains the type and enough information
+	// to tell what we're trying to put there?
 
 	if (verbose)
 	{
@@ -276,8 +287,20 @@ parsed_instruction* parse_instruction(char* statement)
 				p->t_reg_no = get_register_no(rt);
 				if (verbose) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
 
-				imm = strtok_r(s, "(", &s);
-				p->imm = str_to_int(imm);
+				if (s[0] == '(')
+				{
+					// handle case where offset is not specified
+					// ie sw $t0, ($t1)
+					p->imm = 0;
+					s++;
+				}
+				else
+				{
+					// handle case where we have an offset
+					// ie lw $t0, 40($t1)
+					imm = strtok_r(s, "(", &s);
+					p->imm = str_to_int(imm);
+				}
 
 				if (verbose) printf(ANSI_COLOR_CYAN "%s" ANSI_COLOR_RESET, imm);
 
@@ -383,21 +406,21 @@ parsed_instruction* parse_instruction(char* statement)
 
 void execute_instruction(parsed_instruction* p)
 {
-	// todo: check to make sure target is not $zero!
 	if (display_instructions) print_instruction(p);
 
-	if (p->type == J_instruction)
-	{
-		switch(p->opcode)
-		{
-			case J:
-				_j(p->label);
-				return;
-			case JAL:
-				_jal(p->label);
-				return;
-		}
-	}
+
+	// if (p->type == J_instruction)
+	// {
+	// 	switch(p->opcode)
+	// 	{
+	// 		case J:
+	// 			_j(p->label);
+	// 			return;
+	// 		case JAL:
+	// 			_jal(p->label);
+	// 			return;
+	// 	}
+	// }
 
 	if (p->type == P_instruction)
 	{
@@ -507,12 +530,12 @@ void execute_instruction(parsed_instruction* p)
 		// executing j/i type instructions
 		switch (p->opcode)
 		{
-			// case J:
-			// 	_j(p->label);
-			// 	break;
-			// case JAL:
-			// 	_jal(p->label);
-			// 	break;
+			case J:
+				_j(p->label);
+				break;
+			case JAL:
+				_jal(p->label);
+				break;
 			case BEQ:
 				_beq(p->s_reg, p->t_reg, p->label);
 				break;

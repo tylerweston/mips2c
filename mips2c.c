@@ -5,6 +5,12 @@
 	"I should probably be studying..."
 
 	todo:
+		- bubble sort still isn't working? why? try re-downloading,
+		  why does some syntax have to change? implement that next!
+		  such as wordd 12:0 or whatever it was!
+		  How is the SP working out?
+		- need to be able to store arrays like 0 : 12 to declare
+		  enough space for ie arrays
 		- comments that end ascii lines are not handled
 		  properly
 		- if there is more than one space between var name
@@ -107,7 +113,7 @@ int main(int argc, char *argv[])
 	// char* mem_ptr;
 
 	do {
-		while (pc < program.lines)
+		while (pc < program.lines)	//is this a good way to check this?
 		{
 			if (break_max)
 			{
@@ -116,8 +122,11 @@ int main(int argc, char *argv[])
 					break;
 				}
 			}
-			if (display_step_number) printf("[%d]", step_number++);
+			
+			if (display_step_number) printf("[%d]", step_number);
+			step_number++;
 			if (verbose) printf(ANSI_COLOR_YELLOW "%d: " ANSI_COLOR_RESET, pc);
+			
 			statement = strdup(program.source[pc]);
 
 			pc++;	// do we do this here or does it have to be somewhere else?
@@ -359,28 +368,6 @@ program get_program(char* filename)
 
 		    	while(1)	// memory label parse state machine
 		    	{
-		    		// if (d_state == 0)
-		    		// {
-		    		// 	if (*p != ' ')
-		    		// 	{
-		    		// 		// this should be a space before label
-		    		// 		warning("Expected space here");
-		    		// 	}
-		    		// 	d_state++;	//don't increment p to
-		    		// 				// check if we're a . next
-		    		// 	// p++;
-		    		// }
-		    		// else 
-		    		// if (d_state == 1)
-		    		// {
-		    		// 	if (*p != '.')
-		    		// 	{
-		    		// 		// we need a .
-		    		// 		error("Expected . before data type");
-		    		// 	}
-		    		// 	d_state++;
-		    		// 	p++;
-		    		// } 
 		    		if (d_state == 0)
 		    		{
 		    			if (*p == ' ')

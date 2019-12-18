@@ -21,3 +21,8 @@
 // cvt._._
 // convert f -> single precision
 // d -> double precision, w -> integer
+
+void clear_fpu_registers()
+{
+	//todo:
+}
