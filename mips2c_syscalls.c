@@ -81,6 +81,7 @@ void _print_string()
 	int ind = 0;
 	// printf("got addrs %d\n", addr);
 	char c;
+	if (check_flag(f_verbose)||check_flag(f_debug)) printf(ANSI_COLOR_BRIGHT_RED ":" ANSI_COLOR_RESET);
 	while(1)
 	{
 		c = memory[addr + ind];
@@ -107,6 +108,7 @@ void _print_string()
 			break;
 		}
 	}
+	if (check_flag(f_verbose)||check_flag(f_debug)) printf("\n");
 	// free(c);
 }
 
@@ -116,9 +118,10 @@ void _read_string()
 	// 						$a1 = maximum number of characters to read	See note below table
 	int in_buff_addr = read_register(registers, _$A0);
 	int max_len = read_register(registers, _$A1);
+
+	char* in_string = malloc(max_len + 1);	// todo: change this to not hardcoded
 	char format[8];
 	sprintf(format, "%%%ds", max_len);
-	char* in_string = malloc(max_len + 1);	// todo: change this to not hardcoded
 	scanf(format, in_string);
 	int wlen = strlen(in_string) + 1;
 	for (int wi = 0; wi < wlen; wi++)
@@ -132,7 +135,7 @@ void _read_string()
 void _print_int()
 {
 	int to_print = read_register(registers, _$A0);
-	if (verbose)
+	if (check_flag(f_verbose)||check_flag(f_debug))
 	{
 		// a little extra output if we're in verbose mode
 		printf(ANSI_COLOR_BRIGHT_RED ":" ANSI_COLOR_RESET "%i", to_print);
@@ -147,7 +150,7 @@ void _print_int()
 void _get_int()
 {
 	int in;
-	if (verbose) printf(ANSI_COLOR_BRIGHT_RED "$" ANSI_COLOR_RESET);
+	if (check_flag(f_verbose)||check_flag(f_debug)) printf(ANSI_COLOR_BRIGHT_RED "$" ANSI_COLOR_RESET);
 	scanf("%d", &in);
 	write_register(registers, _$V0, in);
 }
@@ -155,7 +158,7 @@ void _get_int()
 void _print_char()
 {
 	int to_print = read_register(registers, _$A0);
-	if (verbose)
+	if (check_flag(f_verbose)||check_flag(f_debug))
 	{
 		// a little extra output if we're in verbose mode	
 		printf(ANSI_COLOR_BRIGHT_RED ":" ANSI_COLOR_RESET "%c", to_print);
@@ -170,7 +173,7 @@ void _print_char()
 void _get_char()
 {
 	char in;
-	if (verbose) printf(ANSI_COLOR_BRIGHT_RED "$" ANSI_COLOR_RESET);
+	if (check_flag(f_verbose)||check_flag(f_debug)) printf(ANSI_COLOR_BRIGHT_RED "$" ANSI_COLOR_RESET);
 	// todo: maybe some error handling here? what if we get more than a char?
 	scanf("%c", &in);
 	write_register(registers, _$V0, (int) in);

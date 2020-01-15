@@ -76,7 +76,7 @@ size: .word  12             # size of "array"
       ##################################################################
       # DO NOT MODIFY
       la   $a0, nums        # first argument for print (array)
-      add  $a1, $s5, $zero      # second argument for print (size)
+      add  $a1, $s5, $zero  # second argument for print (size)
       jal  print            # call print routine. 
       li   $v0, 10          # system call for exit
       syscall               # we are out of here.
@@ -188,7 +188,7 @@ out:  lw   $a0, 0($s0)      # load number for syscall
       addi $s0, $s0, 4      # increment address
       addi $t1, $t1, -1     # decrement loop counter
       bgtz $t1, out         # repeat if not finished
-      # jr   $ra              # return, for now just exit off end?
+      jr   $ra              # return, for now just exit off end?
 ########################################################################
 .data
 nums: .word  0

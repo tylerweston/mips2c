@@ -104,6 +104,7 @@ void _divu(int32_t* s, int32_t *t)
 void _add(int32_t* d, int32_t* s, int32_t* t)
 {
 	// todo: this is signed addition
+	if (check_flag(f_debug)) printf("adding!\n");
 	*d = *s + *t;
 }
 
