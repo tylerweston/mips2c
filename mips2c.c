@@ -5,14 +5,13 @@
 	"I should probably be studying..."
 
 	todo:
+	    - should replace , with ' '
 		- bubble sort still isn't working? why? try re-downloading,
 		  why does some syntax have to change? implement that next!
 		  such as wordd 12:0 or whatever it was!
 		  How is the SP working out?
 		- need to be able to store arrays like 0 : 12 to declare
 		  enough space for ie arrays
-		- comments that end ascii lines are not handled
-		  properly
 		- if there is more than one space between var name
 		  and quotation
 		- problem with lines that have both # and : in them, being interpreted as labels!
@@ -23,6 +22,7 @@
 		- .align directive
 		- test SLT
 		- switch all error messages over to error function
+		- Make error message be able to accept formatted text!
 		- parsing data section still seems brittle! look into this and test more!
 		- right now, this doesn't care about portability really
 		  (asides from specifying uint32_t(?)), try to test
@@ -70,6 +70,7 @@
 
 #include "mips2c.h"
 
+
 // private functions
 void parse_arguments(int argc, char* argv[], char** filename);
 void display_usage(bool full);
@@ -87,21 +88,14 @@ int main(int argc, char *argv[])
 	char* filename;
 	program program;
 
-	verbose = false;					// do we need verbose/debug?
-	debug = false;						// print everything!
-	display_instructions = false;		// show individual parsed instructions
-	display_registers = false;			// display registers at end
-	display_warnings = false;
-	display_memory = false;
-	display_step_number = false;
-	break_max = false;
+	flags = 0;	// init flags
 
 	parse_arguments(argc, argv, &filename);
 
-	if (debug) printf("Setting up memory\n");
+	if (check_flag(f_debug)) printf("Setting up memory\n");
 	clear_memory();						// also sets $SP and data offset for dataseg
 
-	if (debug) printf("Parsing file: " ANSI_COLOR_BLUE "%s\n" ANSI_COLOR_RESET, filename);
+	if (check_flag(f_debug)) printf("Parsing file: " ANSI_COLOR_BLUE "%s\n" ANSI_COLOR_RESET, filename);
 	program = get_program(filename);
 	
 	step_number = 0;
@@ -109,37 +103,31 @@ int main(int argc, char *argv[])
 	bool finished = false;
 	char* statement;
 	parsed_instruction* p;
-	// char* mem_ptr;
 
-	do {
-		while (pc < program.lines)	//is this a good way to check this?
+	while (pc < program.lines)	//is this a good way to check this?
+	{
+		if (check_flag(f_break_max))
 		{
-			if (break_max)
+			if (step_number + 1 > max_steps)
 			{
-				if (step_number + 1 > max_steps)
-				{
-					break;
-				}
-			}
-			
-			if (display_step_number) printf("[%d]", step_number);
-			step_number++;
-			if (verbose) printf(ANSI_COLOR_YELLOW "%d: " ANSI_COLOR_RESET, pc);
-			
-			statement = strdup(program.source[pc]);
-
-			pc++;	// do we do this here or does it have to be somewhere else?
-			p = parse_instruction(statement);
-			if (p != NULL)
-			{
-				if (display_instructions) print_instruction(p);
-				execute_instruction(p);
+				break;
 			}
 		}
+		
+		if (check_flag(f_display_step_number)) printf("[%d]", step_number);
+		step_number++;
+		if (check_flag(f_verbose)) printf(ANSI_COLOR_YELLOW "%d: " ANSI_COLOR_RESET, pc);
+		
+		statement = strdup(program.source[pc]);
 
-		finished = true;
-
-	} while (!finished);
+		pc++;	// do we do this here or does it have to be somewhere else?
+		p = parse_instruction(statement);
+		if (p != NULL)
+		{
+			if (check_flag(f_display_instructions)) print_instruction(p);
+			execute_instruction(p);
+		}
+	}
 
 	exit_info();
 	return 0;
@@ -148,8 +136,8 @@ int main(int argc, char *argv[])
 void exit_info() {
 	// call this before program ends to do any clean-up,
 	// diagnostic stuff, etc.
-	if (display_registers) print_registers(registers);
-	if (display_memory) print_memory();
+	if (check_flag(display_registers)) print_registers(registers); 
+	if (check_flag(display_memory)) print_memory();
 	printf(ANSI_COLOR_RESET "\n");	// flush stuff out just in case
 }
 
@@ -157,37 +145,40 @@ void exit_info() {
 void parse_arguments(int argc, char* argv[], char** filename)
 {
 	int opt;
-	while ((opt = getopt(argc, argv, "l:s:vdhriwnm")) != -1)
+	while ((opt = getopt(argc, argv, "l:s:vdhpriwnm")) != -1)
 	{
 		switch(opt)
 		{
+			case 'p':
+				set_flag(f_print_stack_pointer);
+				break;
 			case 's':
 				max_steps = str_to_int(optarg);
-				break_max = true;
+				set_flag(f_break_max);
 				break;
 			case 'n':
-				display_step_number = true;
+				set_flag(f_display_step_number);
 				break;
 			case 'm':
-				display_memory = true;
+				set_flag(f_display_memory);
 				break;
 			case 'v':
-				verbose = true;
+				set_flag(f_verbose);
 				break;
 			case 'w':
-				display_warnings = true;
+				set_flag(f_display_warnings);
 				break;
 			case 'r':
-				display_registers = true;
+				set_flag(f_display_registers);
 				break;
 			case 'h':
 				display_usage(true);
 				break;
 			case 'i':
-				display_instructions = true;
+				set_flag(f_display_instructions);
 				break;
 			case 'd':
-				debug = true;
+				set_flag(f_debug);
 				break;
 			case 'l':
 				// get program name and load it
@@ -285,8 +276,9 @@ program get_program(char* filename)
 	    {
 	    	if (isalpha(line_parse[0]) == 0)
 	    	{
-	    		printf(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET": Label %s must start with alphabet (not number/symbol)\n", line_parse);
-	    		exit(1);
+    			char err_msg[128];
+				sprintf(err_msg, "Label %s must start with alphabetic character", line_parse);
+				error(err_msg);
 	    	}
 
 	    	// every thing underneath here is only if we are in text section, we match up a label with a line number!
@@ -306,10 +298,6 @@ program get_program(char* filename)
 		    	}
 		    	label_get[pi] = 0;	// null terminate the string
 		    	// ok we got a label
-
-		    	// todo: IF THERE IS MORE OF A LINE HERE, WE NEED TO PARSE IT!!
-		    	// see what else happens here
-
 		    	// now add it to a linked list along with it's line number!	    	
 		    	label_list *node = malloc(sizeof(label_list));
 		    	node->label = malloc(sizeof(MAX_LABEL_LENGTH));
@@ -370,9 +358,9 @@ program get_program(char* filename)
 		    	{
 		    		if (d_state == 0)
 		    		{
-		    			if (*p == ' ')
+		    			if (*p == ' ' || *p == '\t')
 		    			{
-		    				d_state++;
+		    				// d_state++;
 		    				p++;
 		    			}
 		    			else
@@ -415,38 +403,38 @@ program get_program(char* filename)
 	    			if (d_state == 3)
 	    			{
 	    				// error check data type
-	    				if (strcmp(data_type, "ascii") == 0)
+	    				if (STR_EQ(data_type, "ascii"))
 	    				{
 	    					d_type = _ASCII;
 	    				}
-	    				else if (strcmp(data_type, "asciiz") == 0)
+	    				else if (STR_EQ(data_type, "asciiz"))
 	    				{
 	    					d_type = _ASCIIZ;
 	    				}
-	    				else if (strcmp(data_type, "byte") == 0)
+	    				else if (STR_EQ(data_type, "byte"))
 	    				{
 	    					d_type = _BYTE;
 	    				}
-	    				else if (strcmp(data_type, "half") == 0)
+	    				else if (STR_EQ(data_type, "half"))
 	    				{
 	    					d_type = _HALF;
 	    				}
-	    				else if (strcmp(data_type, "word") == 0)
+	    				else if (STR_EQ(data_type, "word"))
 	    				{
 	    					// this can also initialize an array
 	    					// THERE IS SPECIAL SYNTAX THAT CAN BE
 	    					// USED HERE
 	    					d_type = _WORD;
 	    				}
-	    				else if (strcmp(data_type, "float") == 0)
+	    				else if (STR_EQ(data_type, "float"))
 	    				{
 	    					d_type = _FLOAT;
 	    				}
-	    				else if (strcmp(data_type, "double") == 0)
+	    				else if (STR_EQ(data_type, "double"))
 	    				{
 	    					d_type = _DOUBLE;
 	    				}
-	    				else if (strcmp(data_type, "space") == 0)
+	    				else if (STR_EQ(data_type, "space"))
 	    				{
 	    					d_type = _SPACE;
 	    				}
@@ -473,19 +461,37 @@ program get_program(char* filename)
 		    	node->data_type = d_type;
 		    	node->source_line = i;		// we don't care about this!
 		    	node->next = NULL;
-		    	if (debug) printf(ANSI_COLOR_GREEN "%s " ANSI_COLOR_RESET, node->label);
+		    	if (check_flag(f_debug)) printf(ANSI_COLOR_GREEN "%s " ANSI_COLOR_RESET, node->label);
 
 		    	int32_t v;
+		    	// remove comments if they exist
+		    	bool gotQuote = false;
+		    	for (int k = strlen(value); k >= 0; k--)
+		    	{
+		    		if (value[k - 1] == '\"')
+		    		{
+		    			value[k] = '\0';
+		    			gotQuote = true;
+		    			break;
+		    		}
+		    	}
+		    	k = strlen(value) - 1;
+
+		    	if (!gotQuote)
+		    	{
+		    		error("String declaration goes in double quotes!");
+		    	}
+
 		    	switch (d_type)
 		    	{
 		    		case _ASCII:
 		    		case _ASCIIZ:
 		    			// remove start and finish quotes
-		    			if (value[k - 2] != '\"')
+		    			if (value[k] != '\"')
 		    			{
 		    				error("String must end with quotation mark");
 		    			}
-		    			value[k - 2] = 0;
+		    			value[k] = 0;
 
 		    			if (value[0] != '\"')
 		    			{
@@ -497,7 +503,7 @@ program get_program(char* filename)
 		    			// write to mem
 		    			node->mem_address = data_segment_offset;
 		    			int wlen = strlen(value) + 1;	//+1 to account for null terminator
-		    			if (debug) printf("> string > %s\n", value);
+		    			if (check_flag(f_debug)) printf("> string > %s\n", value);
 		    			for (int wi = 0; wi < wlen; wi++)
 		    			{
 		    				char c = value[wi];
@@ -512,7 +518,7 @@ program get_program(char* filename)
 		    		case _HALF:
 		    			// todo: test this, I think it's working?
 		    			v = str_to_int(value);
-		    			if (debug) printf("> word > %i\n", v);
+		    			if (check_flag(f_debug)) printf("> word > %i\n", v);
 		    			node->mem_address = data_segment_offset;
 		    			int* store_loc = (int*)(&memory[data_segment_offset]);
 		    			*store_loc = v;
@@ -562,6 +568,7 @@ program get_program(char* filename)
 	    	}
 	    	if (line_parse[j] == ',')	// remove pesky commas, deal with it
 	    	{
+	    		program.source[i][k++] = ' ';
 	    		continue;
 	    	}
 	    	program.source[i][k++] = line_parse[j];
@@ -573,7 +580,7 @@ program get_program(char* filename)
 
 	    // todo: does this do anythin useful or nah?
 	    // clean up line endings
-	    for (j = strlen(program.source[i])-1; j >= 0 && 
+	    for (j = strlen(program.source[i]) - 1; j >= 0 && 
 			    	   (program.source[i][j] == '\n' || 
 			    		program.source[i][j] == '\t' ||
 			    		program.source[i][j] == '\r' ||
@@ -610,13 +617,13 @@ program get_program(char* filename)
 
 	labels = head;
 
-	if (debug) 
+	if (check_flag(f_debug))
 	{
 		printf("Got labels:\n");
 		print_labels();
 	}
 
-	if (display_memory)
+	if (check_flag(f_display_memory))
 	{
 		printf("Memory:\n");
 		print_memory();

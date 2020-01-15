@@ -14,9 +14,25 @@
 
 // defines
 
+#define STR_EQ(x, y) (strcmp(x, y) == 0)
+
+#define f_verbose (1)
+#define f_debug (1 << 1)
+#define f_display_instructions (1 << 2)
+#define f_display_registers (1 << 3)
+#define f_display_warnings (1 << 4)
+#define f_display_memory (1 << 5)
+#define f_display_step_number (1 << 6)
+#define f_break_max (1 << 7)
+#define f_print_stack_pointer (1 << 8)
+
+// does this work?
+#define set_flag(x) (flags |= x)
+#define check_flag(x) (flags & x)
+
 #define MAX_LABEL_LENGTH 32	// max # of chars allowed per label //should this be diff for strings now?
 #define MAX_STR_LENGTH 64
-#define MEMORY_SIZE 1024
+#define MEMORY_SIZE 32768
 
 // macros  for regiters
 #define _$0 0
@@ -53,7 +69,6 @@
 #define _$FP 30
 #define _$RA 31
 
-
 // color codes for nicer output
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -68,7 +83,6 @@
 #define ANSI_COLOR_BRIGHT_MAGENTA "\x1b[35;1m"
 #define ANSI_COLOR_BRIGHT_CYAN    "\x1b[36;1m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
-
 
 // #define ANSI_BG_COLOR_BLACK   "\x1b[40m"
 // #define ANSI_BG_COLOR_RED     "\x1b[41m"
@@ -150,14 +164,14 @@
 #define debug(x) if(debug) printf(ANSI_COLOR_BRIGHT_GREEN "Debug" ANSI_COLOR_RESET ": " x "\n")
 #define warning(x) if(display_warnings) printf(ANSI_COLOR_CYAN "Warning" ANSI_COLOR_RESET ": " x "\n")
 
-// typedefs
+
+// typedefs ===============================================
 typedef struct {
 	char* filename;
 	char** source;
 	int lines;
 } program;
 
-// todo: write instruction parsing stuff
 typedef enum{
 	R_instruction,
 	I_instruction,
@@ -210,20 +224,15 @@ typedef struct {
 	char* label;				// label!
 } parsed_instruction;
 
+int flags;						// global flags
 
 // program counter
 int pc;
 int step_number;
 int max_steps;
 
-// todo: MEMORY goes here!
+// main memory
 char* memory[MEMORY_SIZE];
-// unsigned char* data_segment[MEMORY_SIZE];
-// int data_segment_offset;
-
-// unsigned char* heap[MEMORY_SIZE];
-// int heap_offset;
-// unsigned char* stack[MEMORY_SIZE];
 
 // we have 32 32-bit registers and HI, LO
 int32_t registers[32];
@@ -233,6 +242,7 @@ int32_t HI;
 // fpu stuff
 int32_t fpu_registers[32];
 
+// program flags
 bool verbose;					// verbose - show program lines as interpreted
 bool debug;						// debug mode - display debug info
 bool display_instructions;		// show individual parsed instructions
@@ -241,16 +251,19 @@ bool display_warnings;
 bool display_memory;
 bool display_step_number;
 bool break_max;
+bool print_stack_pointer;
 
+// address and variable labels
 label_list* labels;
 
-// functions
 
+// functions ========================================================
 program get_program(char* filename);
 // int free_program(char** program);
 int str_to_int(char* str);	// just in case atoi is a no go
 void exit_info();
 int align4(int num);
+void error(char* error);
 
 // instructions
 int32_t instruction_to_machine_code(parsed_instruction* p);
@@ -276,12 +289,10 @@ int get_register_no(char* reg);
 void print_registers(int32_t* registers);
 
 // j - type instructions
-
 void _j(char* label);
 void _jal(char* label);
 
 // r - type instructions
-
 void _sll(int32_t *d, int32_t* t, int32_t shamt);
 void _srl(int32_t *d, int32_t* t, int32_t shamt);
 void _sra(int32_t *d, int32_t* t, int32_t shamt);
@@ -327,7 +338,6 @@ void _ori(int32_t *t, int32_t *s, int32_t imm);
 void _xori(int32_t *t, int32_t *s, int32_t imm);
 
 // Memory
-
 void _lb(int32_t *t, int32_t* s, int32_t offset);
 void _lh(int32_t *t, int32_t* s, int32_t offset);
 void _lbu(int32_t *t, int32_t* s, int32_t offset);
@@ -340,7 +350,6 @@ void _sw(int32_t *t, int32_t* s, int32_t offset);
 
 
 // pseudoinstructions
-
 void _move(int32_t *t, int32_t* s);
 void _clear(int32_t *t);
 void _li(int32_t *t, int imm);
@@ -351,7 +360,6 @@ void _not(int32_t *t, int32_t *s);
 void _nop();
 
 // syscall handling stuff
-
 void _do_syscall();
 void _print_int();
 void _get_int();
@@ -370,5 +378,3 @@ void print_memory();
 
 // for debugging purposes
 void print_labels();
-
-void error(char* error);

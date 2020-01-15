@@ -24,5 +24,6 @@
 
 void clear_fpu_registers()
 {
-	//todo:
+	// todo:
+	// 
 }
