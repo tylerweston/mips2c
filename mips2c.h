@@ -30,11 +30,13 @@
 #define set_flag(x) (flags |= x)
 #define check_flag(x) (flags & x)
 
+// tweak these if needed
 #define MAX_LABEL_LENGTH 32	// max # of chars allowed per label //should this be diff for strings now?
 #define MAX_STR_LENGTH 64
+#define MAX_LINE_LENGTH 128
 #define MEMORY_SIZE 32768
 
-// macros  for regiters
+// macros  for registers
 #define _$0 0
 #define _$ZERO 0
 #define _$AT 1
@@ -84,6 +86,7 @@
 #define ANSI_COLOR_BRIGHT_CYAN    "\x1b[36;1m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+// These don't work right
 // #define ANSI_BG_COLOR_BLACK   "\x1b[40m"
 // #define ANSI_BG_COLOR_RED     "\x1b[41m"
 // #define ANSI_BG_COLOR_GREEN   "\x1b[42m"
@@ -192,7 +195,6 @@ typedef enum{
 	_SPACE
 } data_types;
 
-
 typedef enum{
 	DATA_STATE,
 	TEXT_STATE,
@@ -250,7 +252,7 @@ bool display_registers;			// display registers at end
 bool display_warnings;
 bool display_memory;
 bool display_step_number;
-bool break_max;
+bool break_max;					// end program after a set number of instructions
 bool print_stack_pointer;
 
 // address and variable labels
@@ -347,7 +349,6 @@ void _lui(int32_t *t, int32_t offset);
 void _sb(int32_t *t, int32_t* s, int32_t offset);
 void _sh(int32_t *t, int32_t* s, int32_t offset);
 void _sw(int32_t *t, int32_t* s, int32_t offset);
-
 
 // pseudoinstructions
 void _move(int32_t *t, int32_t* s);

@@ -5,6 +5,7 @@
 	"I should probably be studying..."
 
 	todo:
+		- doesn't display text accurately rn when parsing
 	    - should replace , with ' '
 		- bubble sort still isn't working? why? try re-downloading,
 		  why does some syntax have to change? implement that next!
@@ -28,7 +29,8 @@
 		  (asides from specifying uint32_t(?)), try to test
 		  on  different systems and see how it goes!
 		- wrap malloc function to check return is not null
-		- what does the stack pointer do?
+		- what does the stack pointer do? (NEED TO ALLOCATE MEMORY FOR THIS AND 
+		  ALLOW ARBITRARY WRITES TO SP)
 		- how to more accurately emulate pc?
 		- get some more complex programs to test out and see what else we need to do!
 		- recursive calls?
@@ -46,8 +48,6 @@
 		- LOTS of refactoring to do, especially those gross giant function switch blocks
 		  to get information about them! store it in some sort of dictionary or hashmap or
 		  something!
-		- need a way to handle memory reads/writes, ie 40($s0)
-			- memory addresses should just be pointers into a memory array?
 		- what to do with pseudoinstructions? process first into atomic expr? or just use direct?
 		- floating point coprocessor (CP1)
 			- 32 new registers to add
@@ -68,6 +68,7 @@
     0x7FFFFFFF, and decreasing addresses - Stack segment
 */
 
+// Big ol' header
 #include "mips2c.h"
 
 
@@ -75,6 +76,8 @@
 void parse_arguments(int argc, char* argv[], char** filename);
 void display_usage(bool full);
 
+
+// Main
 int main(int argc, char *argv[])
 {
 	printf(ANSI_COLOR_BRIGHT_BLUE "MIPS2C\n" ANSI_COLOR_RESET);
@@ -86,7 +89,7 @@ int main(int argc, char *argv[])
 	// parse command line inputs	
 
 	char* filename;
-	program program;
+	program program;	// hmm... a variable named program of type program
 
 	flags = 0;	// init flags
 
@@ -121,6 +124,8 @@ int main(int argc, char *argv[])
 		statement = strdup(program.source[pc]);
 
 		pc++;	// do we do this here or does it have to be somewhere else?
+				// do this here so if we jump somewhere else while interpreting
+				// our instruction, we don't increase pc again
 		p = parse_instruction(statement);
 		if (p != NULL)
 		{
@@ -144,8 +149,10 @@ void exit_info() {
 
 void parse_arguments(int argc, char* argv[], char** filename)
 {
+	// check command line arguments and set appropriate flags
+	const char* arg_flags = "l:s:vdhpriwnm";
 	int opt;
-	while ((opt = getopt(argc, argv, "l:s:vdhpriwnm")) != -1)
+	while ((opt = getopt(argc, argv, arg_flags)) != -1)
 	{
 		switch(opt)
 		{
@@ -210,7 +217,6 @@ program get_program(char* filename)
 
 	strcpy(program.filename, filename);
 	int lines_allocated = 128;			// start with 128 lines of space and increase if needed
-	int max_line_len = 100;				// cap line limit at 100 chars
 
 	// Allocate lines of text
 	program.source = (char **)malloc(sizeof(char*)*lines_allocated);
@@ -246,15 +252,15 @@ program get_program(char* filename)
         }
 
 	    // alloc line for space
-	    program.source[i] = malloc(max_line_len);
-	    line_parse = malloc(max_line_len);
+	    program.source[i] = malloc(MAX_LINE_LENGTH);
+	    line_parse = malloc(MAX_LINE_LENGTH);
 
 	    if (program.source[i]==NULL)
         {
             error("Out of memory");
         }
 
-	    if (fgets(line_parse, max_line_len-1, fp) == NULL)
+	    if (fgets(line_parse, MAX_LINE_LENGTH-1, fp) == NULL)
 	    {
 	        break;
 	    }
@@ -402,6 +408,8 @@ program get_program(char* filename)
 	    			else
 	    			if (d_state == 3)
 	    			{
+	    				// we're assuming the label will be lowercase
+	    				// TODO: do we need to cast this? 
 	    				// error check data type
 	    				if (STR_EQ(data_type, "ascii"))
 	    				{
@@ -647,11 +655,13 @@ program get_program(char* filename)
 
 void display_usage(bool full)
 {
-	// todo: add more info about command line arugments here
+	// todo: add more info about command line arguments here
+	// todo: make this const char* or something??
 	printf(" Usage:\n");
 	printf("   ./mip2c -l filename\n");
 	printf("        loads and executes a file.\n");
 	printf("		-h to see all commands\n");
+
 	if (!full)	// display just basic help
 	{ 
 		exit(0);
