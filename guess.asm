@@ -1,12 +1,15 @@
 #guessing game
 .data
 intro: .asciiz "Please guess a number between one and one hundred\n"
+toolo: .asciiz " is too low, guess a higher number.\n"
+toohi: .asciiz " is too high, guess a lower number.\n"
+win: .asciiz " is the correct guess! Good job!\n"
 .text
 start:
 li $t0, 57              # $t0 contains the number to guess!
 ori $v0, $0, 4
 la $a0, intro
-syscall	
+syscall
 guessagain:
 li $v0, 11
 li $a0, 58
@@ -21,30 +24,36 @@ toolow:
 add $a0, $zero, $v0		# print your guess (stored in $v0)
 li $v0, 1	        	# print int
 syscall
-li $v0, 11        		# print char syscall
-li $a0, 60        		# char 60
-syscall				
-li $v0, 11        		# print char syscall
-li $a0, 63        		# question mark
+li $v0, 4
+la $a0, toolo
 syscall
-li $v0, 11        		# print char syscall
-li $a0, 10        		# new line
-syscall
+#li $v0, 11        		# print char syscall
+#li $a0, 60        		# char 60
+#syscall
+#li $v0, 11        		# print char syscall
+#li $a0, 63        		# question mark
+#syscall
+#li $v0, 11        		# print char syscall
+#li $a0, 10        		# new line
+#syscall
 beq $zero, $zero, guessagain
 
 toohigh:
 add $a0, $zero, $v0		# print your guess (stored in $v0)
 li $v0, 1		        #print int
 syscall
-li $v0, 11	        	# print char syscall
-li $a0, 62	        	# greater than sign
+li $v0, 4
+la $a0, toohi
 syscall
-li $v0, 11	        	# print char syscall
-li $a0, 63	        	# question mark
-syscall
-li $v0, 11	        	# print char syscall
-li $a0, 10	        	# new line
-syscall
+#li $v0, 11	        	# print char syscall
+#li $a0, 62	        	# greater than sign
+#syscall
+#li $v0, 11	        	# print char syscall
+#li $a0, 63	        	# question mark
+#syscall
+#li $v0, 11	        	# print char syscall
+#li $a0, 10	        	# new line
+#syscall
 beq $zero, $zero, guessagain
 
 winner:
@@ -52,12 +61,15 @@ add $a0, $zero, $v0		# print your guess (stored in $v0)
 add $t0, $zero, $v0
 li $v0, 1		        # print int
 syscall
-li $v0, 11	        	# print char syscall
-li $a0, 61	        	# equals sign
-syscall					# do a syscall
-add $a0, $zero, $t0		# print your guess (stored in $v0)
-li $v0, 1		        # print int
+li $v0, 4
+la $a0, win
 syscall
-li $v0, 11	        	# print char syscall
-li $a0, 10	        	# new line
-syscall
+#li $v0, 11	        	# print char syscall
+#li $a0, 61	        	# equals sign
+#syscall					# do a syscall
+#add $a0, $zero, $t0		# print your guess (stored in $v0)
+#li $v0, 1		        # print int
+#syscall
+#li $v0, 11	        	# print char syscall
+#li $a0, 10	        	# new line
+#syscall
