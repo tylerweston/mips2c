@@ -4,8 +4,8 @@
 */
 
 #include "mips2c.h"
-#include "mips2c_instructions.h"
-#include "mips2c_memory.h"
+#include "instructions.h"
+#include "memory.h"
 
 void _beq(int32_t *s, int32_t* t, char* label)
 {
@@ -121,7 +121,7 @@ void _lw(int32_t *t, int32_t* s, int32_t offset)
 	{
 		printf("lw > store to: %d > mem_loc: %d > offset: %d\n", *t, *s, offset);
 	}
-	*t = memory[*s + offset];
+	*t = (int32_t) memory[*s + offset];
 }
 
 void _lui(int32_t *t, int32_t offset)

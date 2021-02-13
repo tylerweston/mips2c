@@ -1,6 +1,6 @@
 # hello world
 .data
-out_string: .asciiz "\nHello, World!\n"
+out_string: .asciiz "Hello, World!\n"
 inty: .word 420
 hvar: .half 12
 bvar: .byte 2

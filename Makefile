@@ -1,7 +1,6 @@
 CC=gcc
 CFLAGS=-pedantic -Wall -Wextra -Wfloat-equal -std=gnu99 -g
-OBJS=mips2c.o mips2c_memory.o mips2c_error.o mips2c_instructions.o\
- mips2c_registers.o mips2c_pseudo_instr.o mips2c_i_instr.o mips2c_j_instr.o mips2c_syscalls.c mips2c_r_instr.o
+OBJS=mips2c.o memory.o error.o instructions.o registers.o pseudo_instr.o i_instr.o j_instr.o syscalls.o r_instr.o
 
 
 mips2c:	$(OBJS)
@@ -10,29 +9,33 @@ mips2c:	$(OBJS)
 mips2c.o: mips2c.c
 	$(CC) -O -c mips2c.c
 
-mips2c_error.o: mips2c_error.c
-	$(CC) -O -c mips2c_error.c
+error.o: error.c
+	$(CC) -O -c error.c
 
-mips2c_instructions.o: mips2c_instructions.c
-	$(CC) -O -c mips2c_instructions.c
+instructions.o: instructions.c
+	$(CC) -O -c instructions.c
 
-mips2c_registers.o: mips2c_registers.c
-	$(CC) -O -c mips2c_registers.c
+registers.o: registers.c
+	$(CC) -O -c registers.c
 
-mips2c_i_instr.o: mips2c_i_instr.c
-	$(CC) -O -c mips2c_i_instr.c
+i_instr.o: i_instr.c
+	$(CC) -O -c i_instr.c
 
-mips2c_j_instr.o: mips2c_j_instr.c
-	$(CC) -O -c mips2c_j_instr.c
+j_instr.o: j_instr.c
+	$(CC) -O -c j_instr.c
 
-mips2c_r_instr.o: mips2c_r_instr.c
-	$(CC) -O -c mips2c_r_instr.c
+r_instr.o: r_instr.c
+	$(CC) -O -c r_instr.c
 
-mips2c_pseudo_instr.o: mips2c_pseudo_instr.c
-	$(CC) -O -c mips2c_pseudo_instr.c
+pseudo_instr.o: pseudo_instr.c
+	$(CC) -O -c pseudo_instr.c
 
-mips2c_syscalls.o: mips2c_syscalls.c
-	$(CC) -O -c mips2c_syscalls.c
+syscalls.o: syscalls.c
+	$(CC) -O -c syscalls.c
 
-mips2c_memory.o: mips2c_memory.c
-	$(CC) -O -c mips2c_memory.c
+memory.o: memory.c
+	$(CC) -O -c memory.c
+
+.PHONY : clean
+clean:
+	rm $(OBJS) mips2c

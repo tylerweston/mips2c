@@ -7,7 +7,8 @@
 */
 
 #include "mips2c.h"
-#include "mips2c_instructions.h"
+#include "instructions.h"
+#include "registers.h"
 
 int32_t instruction_to_machine_code(parsed_instruction* p)
 {
@@ -151,8 +152,6 @@ parsed_instruction* parse_instruction(char* statement)
 			if (strcmp(expr, "move") == 0 ||
 				strcmp(expr, "not") == 0 )
 			{
-
-
 				// TODO: WANT TO BE ABLE TO DO SOMETHING LIKE
 				// tokenizer can keep s and &s (??)
 				// tokenizer should fill in the entire parsed instruction?
@@ -424,6 +423,10 @@ parsed_instruction* parse_instruction(char* statement)
 	return p;
 }
 
+
+// TODO: We can make these macros
+// #DEFINE CHECK_AND_EXEC(FUNC_NAME, ...)
+// { if(STR_EQ(p->instruction, #FUNC_NAME) _FUNC_NAME(__VA_ARGS__); return; } // ??? // wrap in do-while?
 void execute_instruction(parsed_instruction* p)
 {
 	if (check_flag(f_display_instructions)) print_instruction(p);

@@ -4,6 +4,8 @@
 */
 
 #include "mips2c.h"
+#include "instructions.h"
+#include "registers.h"
 
 void _j(char* label)
 {

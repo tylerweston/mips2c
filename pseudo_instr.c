@@ -7,7 +7,7 @@
 // whatever, either way is probably fine??
 
 #include "mips2c.h"
-#include "mips2c_instructions.h"
+#include "instructions.h"
 
 // helper
 char* get_memptr_from_labels(char* search_label);

@@ -3,9 +3,9 @@
 #define MIPS2C_REGISTER_H
 
 // we have 32 32-bit registers and HI, LO
-int32_t registers[32];
-int32_t LO;
-int32_t HI;	
+extern int32_t registers[32];
+extern int32_t LO;
+extern int32_t HI;	
 
 // macros  for registers
 #define _$0 0

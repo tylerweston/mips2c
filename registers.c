@@ -2,8 +2,11 @@
 	mips2c register functions
 */
 #include "mips2c.h"
-#include "mips2c_registers.h"
+#include "registers.h"
 
+int32_t registers[32];
+int32_t LO;
+int32_t HI;	
 
 
 void print_info()
@@ -37,8 +40,6 @@ int write_register(int32_t* registers, int reg_num, int value)
 		reg_num == 1 || reg_num == 28 || reg_num == 31 ||
 		reg_num == 30 || reg_num == 29)
 	{
-		// printf("Error: Trying to overwrite register %s\n", reg_num_to_str(reg_num));
-		// exit(1);
 		error("Trying to overwrite invalid register!");
 	}
 
@@ -160,7 +161,6 @@ char* reg_num_to_str(int reg_num)
 void print_registers(int32_t* registers)
 {
 	// Display all registers
-
 	printf("Registers:\n");
 	printf("----------\n");
 	for (int i = 0; i < 32; i++) {
@@ -175,8 +175,6 @@ void print_registers(int32_t* registers)
 int32_t* get_register(char* reg)
 {
 	// Given a register as a string, returns pointer to reg #
-
-	
 	if (strcmp(reg, "$zero") == 0 ||
 		strcmp(reg, "$0") == 0)
 	{
@@ -345,7 +343,7 @@ int32_t* get_register(char* reg)
 
 int get_register_no(char* reg)
 {
-	// Given a register as a string, returns pointer to reg #
+	// Given a register as a string, returns register #
 
 	
 	if (strcmp(reg, "$zero") == 0 ||

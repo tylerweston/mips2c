@@ -70,7 +70,9 @@
 
 // Big ol' header
 #include "mips2c.h"
-#include "mips2c_instructions.h"
+#include "instructions.h"
+#include "memory.h"
+#include "registers.h"
 
 
 // private functions
@@ -203,13 +205,13 @@ void parse_arguments(int argc, char* argv[], char** filename)
 
 program get_program(char* filename) 
 {
+	// Getting the program and parsing should happen seperately!
 	parser_state p_state;
 	p_state = TEXT_STATE;
 
 	int data_segment_offset = 0;	// track where we are in memory
 
 	// TODO: MAYBE move all prints to stderr to stdout (??)
-	// taken & edited from stackoverflow!
 	program program;
 	program.filename = (char*) malloc(strlen(filename) + 1);
 	char* line_parse;
@@ -235,6 +237,9 @@ program get_program(char* filename)
     }
 
 	int i = 0;	// line index
+	// TODO: Split this into different chunks.
+	// First, we'll read the source in, then parse it into tokens,
+	// then we'll interpret it
 	while(1)
     {
 	

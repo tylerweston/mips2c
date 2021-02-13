@@ -35,7 +35,9 @@
 // close file		16	$a0 = file descriptor	 
 
 #include "mips2c.h"
-#include "mips2c_instructions.h"
+#include "instructions.h"
+#include "registers.h"
+#include "memory.h"
 
 void _do_syscall()
 {
@@ -73,15 +75,10 @@ void _do_syscall()
 void _print_string()
 {
 	// print string		4	$a0 = address of null-terminated string to print	 
-	// todo:
-	//	- grab pointer to mem address from $a0
-	//	- iterate over each char, if it is 0, break and return
-	//  - if it is not, just display that character
-	// printf("I'm gonna print a string!");
 	int addr = read_register(registers, _$A0);
 	int ind = 0;
-	// printf("got addrs %d\n", addr);
 	char c;
+	char c2;
 	if (check_flag(f_verbose)||check_flag(f_debug)) printf(ANSI_COLOR_BRIGHT_RED ":" ANSI_COLOR_RESET);
 	while(1)
 	{
@@ -90,7 +87,7 @@ void _print_string()
 		if (c == '\\')
 		{
 			// todo: better way to parse escape chars?
-			char c2 = memory[addr + ind];
+			c2 = memory[addr + ind];
 			if (c2 == 'n')
 			{
 				c = '\n';

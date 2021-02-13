@@ -4,7 +4,8 @@
 */
 
 #include "mips2c.h"
-#include "mips2c_memory.h"
+#include "memory.h"
+#include "registers.h"
 
 char* memory[MEMORY_SIZE];
 
