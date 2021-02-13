@@ -5,6 +5,7 @@
 	"I should probably be studying..."
 
 	todo:
+		- write more tests
 		- doesn't display text accurately rn when parsing
 	    - should replace , with ' '
 		- bubble sort still isn't working? why? try re-downloading,
@@ -52,7 +53,6 @@
 		- floating point coprocessor (CP1)
 			- 32 new registers to add
 			- instructions that have to do with floating point
-		- clean up makefile - depend on headers
 		- figure out whats up with incompatible pointer types with linked list for labels
 		- probably memory leaks EVERYWHERE! need to make sure we clean them up!
 
