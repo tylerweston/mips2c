@@ -4,6 +4,8 @@
 */
 
 #include "mips2c.h"
+#include "mips2c_instructions.h"
+#include "mips2c_memory.h"
 
 void _beq(int32_t *s, int32_t* t, char* label)
 {

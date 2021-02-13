@@ -2,7 +2,7 @@
 	mips2c register functions
 */
 #include "mips2c.h"
-
+#include "mips2c_registers.h"
 
 
 

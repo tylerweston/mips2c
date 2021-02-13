@@ -4,6 +4,9 @@
 */
 
 #include "mips2c.h"
+#include "mips2c_memory.h"
+
+char* memory[MEMORY_SIZE];
 
 void write_memory(char *item, char* mem_loc, int size)
 {

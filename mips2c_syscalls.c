@@ -35,6 +35,7 @@
 // close file		16	$a0 = file descriptor	 
 
 #include "mips2c.h"
+#include "mips2c_instructions.h"
 
 void _do_syscall()
 {

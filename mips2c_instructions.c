@@ -7,6 +7,7 @@
 */
 
 #include "mips2c.h"
+#include "mips2c_instructions.h"
 
 int32_t instruction_to_machine_code(parsed_instruction* p)
 {
@@ -78,12 +79,12 @@ parsed_instruction* parse_instruction(char* statement)
 		expr = strtok_r(s, d, &s);
 		if (expr == NULL) 
 		{
-			if (verbose) printf("\n");
+			if (check_flag(f_verbose)) printf("\n");
 			return NULL;
 		}
 	}
 
-	if (strchr(expr, '.') == NULL && (verbose))
+	if (strchr(expr, '.') == NULL && (check_flag(f_verbose)))
 	{
 				printf(ANSI_COLOR_BRIGHT_GREEN);
 				printf("%s " ANSI_COLOR_RESET, expr);	
@@ -129,7 +130,7 @@ parsed_instruction* parse_instruction(char* statement)
 	// or make a struct that contains the type and enough information
 	// to tell what we're trying to put there?
 
-	if (verbose)
+	if (check_flag(f_verbose))
 	{
 		if (expr[0] == '.')
 		{

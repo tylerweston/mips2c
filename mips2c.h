@@ -3,6 +3,8 @@
 */
 
 // shared includes
+#ifndef MIPS2C_H
+#define MIPS2C_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -164,8 +166,8 @@
 
 #define NONE 999
 
-#define debug(x) if(debug) printf(ANSI_COLOR_BRIGHT_GREEN "Debug" ANSI_COLOR_RESET ": " x "\n")
-#define warning(x) if(display_warnings) printf(ANSI_COLOR_CYAN "Warning" ANSI_COLOR_RESET ": " x "\n")
+#define debug(x) if(check_flag(f_debug)) printf(ANSI_COLOR_BRIGHT_GREEN "Debug" ANSI_COLOR_RESET ": " x "\n")
+#define warning(x) if(check_flag(f_display_warnings)) printf(ANSI_COLOR_CYAN "Warning" ANSI_COLOR_RESET ": " x "\n")
 
 
 // typedefs ===============================================
@@ -175,13 +177,13 @@ typedef struct {
 	int lines;
 } program;
 
-typedef enum{
-	R_instruction,
-	I_instruction,
-	J_instruction,
-	P_instruction,	// pseudoinstructions
-	none
-} instruction_type;
+// typedef enum{
+// 	R_instruction,
+// 	I_instruction,
+// 	J_instruction,
+// 	P_instruction,	// pseudoinstructions
+// 	none
+// } instruction_type;
 
 typedef enum{
 	_PC,
@@ -209,54 +211,54 @@ typedef struct{
 	struct labels_list* next;
 } label_list;
 
-typedef struct {
-	char* instruction;			// instruction expr
-	instruction_type type;		// R, I, J type
-	int32_t opcode;				// 6 bit opcode
-	int32_t* s_reg;				// pointer to register
-	int32_t* t_reg;				// pointer to register
-	int32_t* d_reg;				// pointer to register
-	int s_reg_no;				// register number
-	int t_reg_no;				// register number
-	int d_reg_no;				// register number
-	int32_t shamt;				// 5 bit shift amount
-	int32_t funct;				// 6 bit function
-	int32_t imm;				// 16 bit immediate val
-	int32_t address;			// 26 bit address (do we still need?)
-	char* label;				// label!
-} parsed_instruction;
+// typedef struct {
+// 	char* instruction;			// instruction expr
+// 	instruction_type type;		// R, I, J type
+// 	int32_t opcode;				// 6 bit opcode
+// 	int32_t* s_reg;				// pointer to register
+// 	int32_t* t_reg;				// pointer to register
+// 	int32_t* d_reg;				// pointer to register
+// 	int s_reg_no;				// register number
+// 	int t_reg_no;				// register number
+// 	int d_reg_no;				// register number
+// 	int32_t shamt;				// 5 bit shift amount
+// 	int32_t funct;				// 6 bit function
+// 	int32_t imm;				// 16 bit immediate val
+// 	int32_t address;			// 26 bit address (do we still need?)
+// 	char* label;				// label!
+// } parsed_instruction;
 
-int flags;						// global flags
+extern int flags;						// global flags
 
 // program counter
-int pc;
-int step_number;
-int max_steps;
+extern int pc;
+extern int step_number;
+extern int max_steps;
 
 // main memory
-char* memory[MEMORY_SIZE];
+extern char* memory[MEMORY_SIZE];
 
 // we have 32 32-bit registers and HI, LO
-int32_t registers[32];
-int32_t LO;
-int32_t HI;	
+extern int32_t registers[32];
+extern int32_t LO;
+extern int32_t HI;	
 
 // fpu stuff
-int32_t fpu_registers[32];
+extern int32_t fpu_registers[32];
 
-// program flags
-bool verbose;					// verbose - show program lines as interpreted
-bool debug;						// debug mode - display debug info
-bool display_instructions;		// show individual parsed instructions
-bool display_registers;			// display registers at end
-bool display_warnings;
-bool display_memory;
-bool display_step_number;
-bool break_max;					// end program after a set number of instructions
-bool print_stack_pointer;
+// // program flags
+// extern bool verbose;					// verbose - show program lines as interpreted
+// extern bool debug;						// debug mode - display debug info
+// extern bool display_instructions;		// show individual parsed instructions
+// extern bool display_registers;			// display registers at end
+// extern bool display_warnings;
+// extern bool display_memory;
+// extern bool display_step_number;
+// extern bool break_max;					// end program after a set number of instructions
+// extern bool print_stack_pointer;
 
 // address and variable labels
-label_list* labels;
+extern label_list* labels;
 
 
 // functions ========================================================
@@ -267,16 +269,16 @@ void exit_info();
 int align4(int num);
 void error(char* error);
 
-// instructions
-int32_t instruction_to_machine_code(parsed_instruction* p);
-parsed_instruction* parse_instruction(char* statement);
-void execute_instruction(parsed_instruction* p);
-instruction_type get_instruction_type(char* expr);
-int32_t get_opcode(char* expr);
-int get_num_args(char* expr);
-void print_instruction(parsed_instruction* p);
-int32_t get_funct(char* expr);
-int get_line_from_labels(char* search_label);
+// // instructions
+// int32_t instruction_to_machine_code(parsed_instruction* p);
+// parsed_instruction* parse_instruction(char* statement);
+// void execute_instruction(parsed_instruction* p);
+// instruction_type get_instruction_type(char* expr);
+// int32_t get_opcode(char* expr);
+// int get_num_args(char* expr);
+// void print_instruction(parsed_instruction* p);
+// int32_t get_funct(char* expr);
+// int get_line_from_labels(char* search_label);
 
 // register stuff
 // todo: we can take all of these references to registers out of here
@@ -290,54 +292,54 @@ int32_t* get_register(char* reg);
 int get_register_no(char* reg);
 void print_registers(int32_t* registers);
 
-// j - type instructions
-void _j(char* label);
-void _jal(char* label);
+// // j - type instructions
+// void _j(char* label);
+// void _jal(char* label);
 
-// r - type instructions
-void _sll(int32_t *d, int32_t* t, int32_t shamt);
-void _srl(int32_t *d, int32_t* t, int32_t shamt);
-void _sra(int32_t *d, int32_t* t, int32_t shamt);
-void _sllv(int32_t *d, int32_t* t, int32_t* s);
-void _srlv(int32_t *d, int32_t* t, int32_t* s);
-void _srav(int32_t *d, int32_t* t, int32_t* s);
-void _syscall();
-void _mfhi(int32_t *d);
-void _mthi(int32_t *s);
-void _mflo(int32_t *d);
-void _mtlo(int32_t *s);
-void _jr(int32_t* s);
-void _jalr(int32_t* d, int32_t *s);
-void _mult(int32_t* s, int32_t *t);
-void _multu(int32_t* s, int32_t *t);
-void _div(int32_t* s, int32_t *t);
-void _divu(int32_t* s, int32_t *t);
-void _add(int32_t* d, int32_t* s, int32_t* t);
-void _addu(int32_t* d, int32_t* s, int32_t* t);
-void _sub(int32_t* d, int32_t* s, int32_t* t);
-void _subu(int32_t* d, int32_t* s, int32_t* t);
-// void _addi(int32_t* t, int32_t* s, int32_t imm);
-// void _addiu(int32_t* t, int32_t* s, int32_t imm);
-void _and(int32_t *d, int32_t* s, int32_t* t);
-void _or(int32_t *d, int32_t* s, int32_t* t);
-void _xor(int32_t *d, int32_t* s, int32_t* t);
-void _nor(int32_t *d, int32_t* s, int32_t* t);
-void _slt(int32_t *d, int32_t* s, int32_t* t);
-void _sltu(int32_t *d, int32_t* s, int32_t* t);
-void _ori(int32_t *t, int32_t *s, int32_t imm);
+// // r - type instructions
+// void _sll(int32_t *d, int32_t* t, int32_t shamt);
+// void _srl(int32_t *d, int32_t* t, int32_t shamt);
+// void _sra(int32_t *d, int32_t* t, int32_t shamt);
+// void _sllv(int32_t *d, int32_t* t, int32_t* s);
+// void _srlv(int32_t *d, int32_t* t, int32_t* s);
+// void _srav(int32_t *d, int32_t* t, int32_t* s);
+// void _syscall();
+// void _mfhi(int32_t *d);
+// void _mthi(int32_t *s);
+// void _mflo(int32_t *d);
+// void _mtlo(int32_t *s);
+// void _jr(int32_t* s);
+// void _jalr(int32_t* d, int32_t *s);
+// void _mult(int32_t* s, int32_t *t);
+// void _multu(int32_t* s, int32_t *t);
+// void _div(int32_t* s, int32_t *t);
+// void _divu(int32_t* s, int32_t *t);
+// void _add(int32_t* d, int32_t* s, int32_t* t);
+// void _addu(int32_t* d, int32_t* s, int32_t* t);
+// void _sub(int32_t* d, int32_t* s, int32_t* t);
+// void _subu(int32_t* d, int32_t* s, int32_t* t);
+// // void _addi(int32_t* t, int32_t* s, int32_t imm);
+// // void _addiu(int32_t* t, int32_t* s, int32_t imm);
+// void _and(int32_t *d, int32_t* s, int32_t* t);
+// void _or(int32_t *d, int32_t* s, int32_t* t);
+// void _xor(int32_t *d, int32_t* s, int32_t* t);
+// void _nor(int32_t *d, int32_t* s, int32_t* t);
+// void _slt(int32_t *d, int32_t* s, int32_t* t);
+// void _sltu(int32_t *d, int32_t* s, int32_t* t);
+// void _ori(int32_t *t, int32_t *s, int32_t imm);
 
-// i-type instructions
-void _beq(int32_t *s, int32_t* t, char* label);
-void _bne(int32_t *s, int32_t* t, char* label);
-void _blez(int32_t *s, char* label);
-void _bgtz(int32_t *s, char* label);
-void _addi(int32_t *t, int32_t *s, int32_t imm);
-void _addiu(int32_t *t, int32_t *s, int32_t imm);
-void _slti(int32_t *t, int32_t *s, int32_t imm);
-void _sltiu(int32_t *t, int32_t *s, int32_t imm);
-void _andi(int32_t *t, int32_t *s, int32_t imm);
-void _ori(int32_t *t, int32_t *s, int32_t imm);
-void _xori(int32_t *t, int32_t *s, int32_t imm);
+// // i-type instructions
+// void _beq(int32_t *s, int32_t* t, char* label);
+// void _bne(int32_t *s, int32_t* t, char* label);
+// void _blez(int32_t *s, char* label);
+// void _bgtz(int32_t *s, char* label);
+// void _addi(int32_t *t, int32_t *s, int32_t imm);
+// void _addiu(int32_t *t, int32_t *s, int32_t imm);
+// void _slti(int32_t *t, int32_t *s, int32_t imm);
+// void _sltiu(int32_t *t, int32_t *s, int32_t imm);
+// void _andi(int32_t *t, int32_t *s, int32_t imm);
+// void _ori(int32_t *t, int32_t *s, int32_t imm);
+// void _xori(int32_t *t, int32_t *s, int32_t imm);
 
 // Memory
 void _lb(int32_t *t, int32_t* s, int32_t offset);
@@ -350,32 +352,34 @@ void _sb(int32_t *t, int32_t* s, int32_t offset);
 void _sh(int32_t *t, int32_t* s, int32_t offset);
 void _sw(int32_t *t, int32_t* s, int32_t offset);
 
-// pseudoinstructions
-void _move(int32_t *t, int32_t* s);
-void _clear(int32_t *t);
-void _li(int32_t *t, int imm);
-void _la(int32_t *d, char* label);
-// void _div(int32_t *d, int32_t *s, int32_t *t);
-void _rem(int32_t *d, int32_t *s, int32_t *t);
-void _not(int32_t *t, int32_t *s);
-void _nop();
+// // pseudoinstructions
+// void _move(int32_t *t, int32_t* s);
+// void _clear(int32_t *t);
+// void _li(int32_t *t, int imm);
+// void _la(int32_t *d, char* label);
+// // void _div(int32_t *d, int32_t *s, int32_t *t);
+// void _rem(int32_t *d, int32_t *s, int32_t *t);
+// void _not(int32_t *t, int32_t *s);
+// void _nop();
 
-// syscall handling stuff
-void _do_syscall();
-void _print_int();
-void _get_int();
-void _do_terminate_with_code();
-void _do_terminate_no_code();
-void _print_char();
-void _get_char();
-void _print_string();
-void _read_string();
+// // syscall handling stuff
+// void _do_syscall();
+// void _print_int();
+// void _get_int();
+// void _do_terminate_with_code();
+// void _do_terminate_no_code();
+// void _print_char();
+// void _get_char();
+// void _print_string();
+// void _read_string();
 
-// Memory stuff
-void write_memory(char *item, char* mem_loc, int size);
-void get_memory(char *save_loc, char* mem_loc, int size);
-void clear_memory();
-void print_memory();
+// // Memory stuff
+// void write_memory(char *item, char* mem_loc, int size);
+// void get_memory(char *save_loc, char* mem_loc, int size);
+// void clear_memory();
+// void print_memory();
 
 // for debugging purposes
 void print_labels();
+
+#endif

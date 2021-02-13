@@ -70,12 +70,17 @@
 
 // Big ol' header
 #include "mips2c.h"
+#include "mips2c_instructions.h"
 
 
 // private functions
 void parse_arguments(int argc, char* argv[], char** filename);
 void display_usage(bool full);
 
+int flags = 0;	// init flags
+int pc = 0;
+int max_steps;
+label_list* labels;
 
 // Main
 int main(int argc, char *argv[])
@@ -91,8 +96,6 @@ int main(int argc, char *argv[])
 	char* filename;
 	program program;	// hmm... a variable named program of type program
 
-	flags = 0;	// init flags
-
 	parse_arguments(argc, argv, &filename);
 
 	if (check_flag(f_debug)) printf("Setting up memory\n");
@@ -101,8 +104,8 @@ int main(int argc, char *argv[])
 	if (check_flag(f_debug)) printf("Parsing file: " ANSI_COLOR_BLUE "%s\n" ANSI_COLOR_RESET, filename);
 	program = get_program(filename);
 	
-	step_number = 0;
-	pc = 0;
+	int step_number = 0;
+
 	bool finished = false;
 	char* statement;
 	parsed_instruction* p;
@@ -141,8 +144,8 @@ int main(int argc, char *argv[])
 void exit_info() {
 	// call this before program ends to do any clean-up,
 	// diagnostic stuff, etc.
-	if (check_flag(display_registers)) print_registers(registers); 
-	if (check_flag(display_memory)) print_memory();
+	if (check_flag(f_display_registers)) print_registers(registers); 
+	if (check_flag(f_display_memory)) print_memory();
 	printf(ANSI_COLOR_RESET "\n");	// flush stuff out just in case
 }
 
