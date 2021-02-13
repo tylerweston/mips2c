@@ -87,8 +87,6 @@ label_list* labels;
 // Main
 int main(int argc, char *argv[])
 {
-	printf(ANSI_COLOR_BRIGHT_BLUE "MIPS2C\n" ANSI_COLOR_RESET);
-	printf("--------------------------\n");
 	if (argc == 1)
 	{
 		display_usage(false);
@@ -99,6 +97,12 @@ int main(int argc, char *argv[])
 	program program;	// hmm... a variable named program of type program
 
 	parse_arguments(argc, argv, &filename);
+
+	if (!check_flag(f_no_additional_output))
+	{
+		printf(ANSI_COLOR_BRIGHT_BLUE "MIPS2C\n" ANSI_COLOR_RESET);
+		printf("--------------------------\n");
+	}
 
 	if (check_flag(f_debug)) printf("Setting up memory\n");
 	clear_memory();						// also sets $SP and data offset for dataseg
@@ -148,19 +152,22 @@ void exit_info() {
 	// diagnostic stuff, etc.
 	if (check_flag(f_display_registers)) print_registers(registers); 
 	if (check_flag(f_display_memory)) print_memory();
-	printf(ANSI_COLOR_RESET "\n");	// flush stuff out just in case
+	if (!check_flag(f_no_additional_output)) printf(ANSI_COLOR_RESET "\n");	// flush stuff out just in case
 }
 
 
 void parse_arguments(int argc, char* argv[], char** filename)
 {
 	// check command line arguments and set appropriate flags
-	const char* arg_flags = "l:s:vdhpriwnm";
+	const char* arg_flags = "l:s:vdhpriwnmt";
 	int opt;
 	while ((opt = getopt(argc, argv, arg_flags)) != -1)
 	{
 		switch(opt)
 		{
+			case 't':
+				set_flag(f_no_additional_output);
+				break;
 			case 'p':
 				set_flag(f_print_stack_pointer);
 				break;
@@ -680,6 +687,8 @@ void display_usage(bool full)
 	printf(" -v\t\tverbose mode\n");
 	printf(" -r\t\tdisplay registers\n");
 	printf(" -s steps\thalt after steps iterations\n");
+	printf(" -n\t\tdisplay step numbers\n");
+	printf(" -t\t\ttesting mode, no additional output\n");
 	printf(" -d\t\tdebug mode\n");
 	printf("\n");
 	printf(ANSI_COLOR_RED "Tyler Weston, 2019/2020\n" ANSI_COLOR_RESET);

@@ -27,6 +27,7 @@
 #define f_display_step_number (1 << 6)
 #define f_break_max (1 << 7)
 #define f_print_stack_pointer (1 << 8)
+#define f_no_additional_output (1 << 9)
 
 // does this work?
 #define set_flag(x) (flags |= x)
