@@ -58,6 +58,8 @@
 #define debug(x) if(check_flag(f_debug)) printf(ANSI_COLOR_BRIGHT_GREEN "Debug" ANSI_COLOR_RESET ": " x "\n")
 #define warning(x) if(check_flag(f_display_warnings)) printf(ANSI_COLOR_CYAN "Warning" ANSI_COLOR_RESET ": " x "\n")
 
+#define MAJOR_VERSION 0
+#define MINOR_VERSION 2
 
 // typedefs ===============================================
 typedef struct {
