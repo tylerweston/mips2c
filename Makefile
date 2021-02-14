@@ -2,7 +2,6 @@ CC=gcc
 CFLAGS=-pedantic -Wall -Wextra -Wfloat-equal -std=gnu99 -g
 OBJS=mips2c.o memory.o error.o instructions.o registers.o pseudo_instr.o i_instr.o j_instr.o syscalls.o r_instr.o
 
-
 mips2c:	$(OBJS)
 	$(CC) $(OBJS) -o mips2c
 
@@ -35,6 +34,10 @@ syscalls.o: syscalls.c
 
 memory.o: memory.c
 	$(CC) -O -c memory.c
+
+.PHONY : check
+check:
+	cd tests; bash run_tests.sh
 
 .PHONY : clean
 clean:
