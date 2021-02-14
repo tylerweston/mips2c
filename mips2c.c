@@ -73,11 +73,14 @@
 #include "instructions.h"
 #include "memory.h"
 #include "registers.h"
+#include <getopt.h>
 
 
 // private functions
 void parse_arguments(int argc, char* argv[], char** filename);
 void display_usage(bool full);
+void show_version();
+void no_filename_provided();
 
 int flags = 0;	// init flags
 int pc = 0;
@@ -93,10 +96,16 @@ int main(int argc, char *argv[])
 	}
 	// parse command line inputs	
 
-	char* filename;
+	char* filename = NULL;
 	program program;	// hmm... a variable named program of type program
 
 	parse_arguments(argc, argv, &filename);
+
+	if (!filename)
+	{
+		printf("No filename supplied\n");
+		display_usage(false);
+	}
 
 	if (!check_flag(f_no_additional_output))
 	{
@@ -150,65 +159,112 @@ int main(int argc, char *argv[])
 void exit_info() {
 	// call this before program ends to do any clean-up,
 	// diagnostic stuff, etc.
-	if (check_flag(f_display_registers)) print_registers(registers); 
-	if (check_flag(f_display_memory)) print_memory();
-	if (!check_flag(f_no_additional_output)) printf(ANSI_COLOR_RESET "\n");	// flush stuff out just in case
+	if (check_flag(f_display_registers)) 
+		print_registers(registers); 
+	if (check_flag(f_display_memory)) 
+		print_memory();
+	// If we have no additional output set, DON'T add an
+	// extra newline.
+	if (!check_flag(f_no_additional_output)) 
+		printf(ANSI_COLOR_RESET "\n");	// flush stuff out just in case
+}
+
+void show_version()
+{
+	printf("mips2c\n")
+	printf("Version %d.%d\n", MAJOR_VERSION, MINOR_VERSION);
+	printf("Written by Tyler Weston.\n");
+}
+
+void no_filename_provided()
+{
+	printf("No filename provided\n");
+	display_usage(false);
+	exit(1);
 }
 
 
 void parse_arguments(int argc, char* argv[], char** filename)
 {
-	// check command line arguments and set appropriate flags
-	const char* arg_flags = "l:s:vdhpriwnmt";
 	int opt;
-	while ((opt = getopt(argc, argv, arg_flags)) != -1)
+	int option_index = 0;
+	static const char* arg_flags = "s:vbdhpriwnmt";
+	static struct option long_options[] =
 	{
-		switch(opt)
+		{"verbose",				no_argument, 		0, 'b'},
+		{"debug",				no_argument,		0, 'd'},
+		{"version",				no_argument, 		0, 'v'},
+		{"testmode",			no_argument,		0, 't'},
+		{"printsp",				no_argument,		0, 'p'},
+		{"help",				no_argument,		0, 'h'},
+		{"maxsteps",			required_argument,	0, 's'},
+		{"printsteps",			no_argument,		0, 'n'},
+		{"printmemory",			no_argument,		0, 'm'},
+		{"printregisters",		no_argument,		0, 'r'},
+		{"printwarnings",		no_argument,		0, 'w'},
+		{"printinstructions",	no_argument,		0, 'i'},
+		{0, 					0, 					0, 0}
+	};
+
+	while (true)
+	{
+
+		opt = getopt_long (argc, argv, arg_flags,
+			long_options, &option_index);
+
+		if (opt == -1)
+			break;
+
+		switch (opt)
 		{
-			case 't':
-				set_flag(f_no_additional_output);
-				break;
-			case 'p':
-				set_flag(f_print_stack_pointer);
-				break;
-			case 's':
-				max_steps = str_to_int(optarg);
-				set_flag(f_break_max);
-				break;
-			case 'n':
-				set_flag(f_display_step_number);
-				break;
-			case 'm':
-				set_flag(f_display_memory);
-				break;
-			case 'v':
-				set_flag(f_verbose);
-				break;
-			case 'w':
-				set_flag(f_display_warnings);
-				break;
-			case 'r':
-				set_flag(f_display_registers);
-				break;
-			case 'h':
-				display_usage(true);
-				break;
-			case 'i':
-				set_flag(f_display_instructions);
-				break;
-			case 'd':
-				set_flag(f_debug);
-				break;
-			case 'l':
-				// get program name and load it
-				*filename = optarg;
-				break;
-			default:
-				display_usage(false);
-				break;
+		case 'b':
+			set_flag(f_verbose);
+			break;
+		case 'v':
+			show_version();
+			break;
+		case 't':
+			set_flag(f_no_additional_output);
+			break;
+		case 'p':
+			set_flag(f_print_stack_pointer);
+			break;
+		case 'h':
+			display_usage(true);
+			break;
+		case 's':
+			max_steps = str_to_int(optarg);
+			set_flag(f_break_max);
+			break;
+		case 'm':
+			set_flag(f_display_memory);
+			break;
+		case 'w':
+			set_flag(f_display_warnings);
+			break;
+		case 'r':
+			set_flag(f_display_registers);
+			break;
+		case 'i':
+			set_flag(f_display_instructions);
+			break;
+		case 'd':
+			set_flag(f_debug);
+			break;
+		case 'n':
+			set_flag(f_display_step_number);
+			break;
+		default:
+			display_usage(false);
 		}
 	}
+
+	// getopt moves non-options to the end of the command-line
+	*filename = argv[argc-1];
+	if (filename == NULL || *filename[0] == '\0' || *filename[0] == '-')	// make sure it isn't an option
+		no_filename_provided();
 }
+
 
 program get_program(char* filename) 
 {
@@ -260,9 +316,9 @@ program get_program(char* filename)
 	        new_size = lines_allocated * 2;
 	        program.source = (char **) realloc(program.source, sizeof(char*)*new_size);
 	        if (program.source == NULL)
-	            {
-	            error("Out of memory");
-	            }
+            {
+            	error("Out of memory");
+            }
 	        lines_allocated = new_size;
         }
 
@@ -670,26 +726,28 @@ program get_program(char* filename)
 
 void display_usage(bool full)
 {
-	// todo: add more info about command line arguments here
-	// todo: make this const char* or something??
 	printf(" Usage:\n");
-	printf("   ./mip2c -l filename\n");
+	printf("   ./mip2c filename\n");
 	printf("        loads and executes a file.\n");
-	printf("		-h to see all commands\n");
+	printf("		--help or -h to see all commands\n");
 
 	if (!full)	// display just basic help
 	{ 
 		exit(0);
 	}
 	printf("\nFull help:\n");
-	printf(" -m\t\tdisplay memory\n");
-	printf(" -i\t\tdisplay parsed instructions\n");
-	printf(" -v\t\tverbose mode\n");
-	printf(" -r\t\tdisplay registers\n");
-	printf(" -s steps\thalt after steps iterations\n");
-	printf(" -n\t\tdisplay step numbers\n");
-	printf(" -t\t\ttesting mode, no additional output\n");
-	printf(" -d\t\tdebug mode\n");
+	printf(" --help, -h\t\t\tdisplay this help message\n");
+	printf(" --version, -v\t\t\tdisplay version information\n");
+	printf(" --verbose, -b\t\t\tverbose mode\n");
+	printf(" --debug, -d\t\t\tdebug mode\n");
+	printf(" --testmode, -t\t\t\ttesting mode, no additional output\n");
+	printf(" --printsp, -p\t\t\tdisplay stack pointer\n");
+	printf(" --printmemory, -m\t\tdisplay memory\n");
+	printf(" --printinstructions, -i\tdisplay parsed instructions\n");
+	printf(" --printwarnings, -w\t\tdisplay warnings\n");
+	printf(" --printregisters, -r\t\tdisplay registers\n");
+	printf(" --maxsteps #, -s #\t\thalt after # steps iterations\n");
+	printf(" --printsteps, -n\t\tdisplay step numbers\n");
 	printf("\n");
 	printf(ANSI_COLOR_RED "Tyler Weston, 2019/2020\n" ANSI_COLOR_RESET);
 	exit(0);
