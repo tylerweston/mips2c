@@ -34,3 +34,5 @@ To run tests after building:
 ``` 
 make check
 ```
+  
+Written by Tyler Weston. 2021. This work is licensed under the terms of the MIT license.
