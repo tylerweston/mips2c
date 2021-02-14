@@ -171,9 +171,12 @@ void exit_info() {
 
 void show_version()
 {
-	printf("mips2c\n")
+	printf("mips2c\n");
 	printf("Version %d.%d\n", MAJOR_VERSION, MINOR_VERSION);
 	printf("Written by Tyler Weston.\n");
+
+	printf("This work is licensed under the terms of the MIT license.\n");  
+	printf("For a copy, see <https://opensource.org/licenses/MIT>.\n");
 }
 
 void no_filename_provided()
