@@ -3,9 +3,9 @@
 	j type instruction handler	
 */
 
-#include "mips2c.h"
-#include "instructions.h"
-#include "registers.h"
+#include "headers/mips2c.h"
+#include "headers/instructions.h"
+#include "headers/registers.h"
 
 void _j(char* label)
 {

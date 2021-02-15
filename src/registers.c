@@ -1,8 +1,8 @@
 /*
 	mips2c register functions
 */
-#include "mips2c.h"
-#include "registers.h"
+#include "headers/mips2c.h"
+#include "headers/registers.h"
 
 int32_t registers[32];
 int32_t LO;

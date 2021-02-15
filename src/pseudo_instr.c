@@ -6,8 +6,8 @@
 // better to implement these directly or translate them to their corresponding pure mips before?
 // whatever, either way is probably fine??
 
-#include "mips2c.h"
-#include "instructions.h"
+#include "headers/mips2c.h"
+#include "headers/instructions.h"
 
 // helper
 char* get_memptr_from_labels(char* search_label);

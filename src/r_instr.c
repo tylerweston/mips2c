@@ -3,7 +3,7 @@
 	r type instruction handler
 */
 
-#include "mips2c.h"
+#include "headers/mips2c.h"
 
 void _sll(int32_t *d, int32_t* t, int32_t shamt)
 {

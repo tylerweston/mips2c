@@ -1,44 +1,33 @@
-CC=gcc
-CFLAGS=-pedantic -Wall -Wextra -Wfloat-equal -std=gnu99 -g
-OBJS=mips2c.o memory.o error.o instructions.o registers.o pseudo_instr.o i_instr.o j_instr.o syscalls.o r_instr.o
+SRC_DIR := src
+OBJ_DIR := obj
+BIN_DIR := .
 
-mips2c:	$(OBJS)
-	$(CC) $(OBJS) -o mips2c
+EXE := ./mips2c
 
-mips2c.o: mips2c.c
-	$(CC) -O -c mips2c.c
+SRC := $(wildcard $(SRC_DIR)/*.c)
+OBJ := $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-error.o: error.c
-	$(CC) -O -c error.c
+CPPFLAGS := -Iinclude -MMD -MP
+CFLAGS := -pedantic -Wall -Wextra -Wfloat-equal -std=gnu99 -g
 
-instructions.o: instructions.c
-	$(CC) -O -c instructions.c
+.PHONY: all
+all: $(EXE)
 
-registers.o: registers.c
-	$(CC) -O -c registers.c
+$(EXE): $(OBJ)
+	$(CC) $^ -o $@
 
-i_instr.o: i_instr.c
-	$(CC) -O -c i_instr.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-j_instr.o: j_instr.c
-	$(CC) -O -c j_instr.c
+$(OBJ_DIR):
+	mkdir -p $@
 
-r_instr.o: r_instr.c
-	$(CC) -O -c r_instr.c
-
-pseudo_instr.o: pseudo_instr.c
-	$(CC) -O -c pseudo_instr.c
-
-syscalls.o: syscalls.c
-	$(CC) -O -c syscalls.c
-
-memory.o: memory.c
-	$(CC) -O -c memory.c
-
-.PHONY : check
-check:
-	cd tests; bash run_tests.sh
-
-.PHONY : clean
+.PHONY: clean
 clean:
-	rm $(OBJS) mips2c
+	@$(RM) -rv $(OBJ_DIR) $(EXE)
+
+.PHONY: check
+check:
+	@cd tests; bash run_tests.sh
+
+-include $(OBJ:.o=.d)

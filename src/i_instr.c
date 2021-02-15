@@ -3,9 +3,9 @@
 	I-type instructions
 */
 
-#include "mips2c.h"
-#include "instructions.h"
-#include "memory.h"
+#include "headers/mips2c.h"
+#include "headers/instructions.h"
+#include "headers/memory.h"
 
 void _beq(int32_t *s, int32_t* t, char* label)
 {

@@ -6,9 +6,9 @@
 		- return number of arguments an expression has
 */
 
-#include "mips2c.h"
-#include "instructions.h"
-#include "registers.h"
+#include "headers/mips2c.h"
+#include "headers/instructions.h"
+#include "headers/registers.h"
 
 int32_t instruction_to_machine_code(parsed_instruction* p)
 {

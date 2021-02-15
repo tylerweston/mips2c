@@ -1,7 +1,7 @@
 /*
 	mips2c_errors
 */
-#include "mips2c.h"
+#include "headers/mips2c.h"
 
 
 // plump this up? print to stderr as well for error logging?

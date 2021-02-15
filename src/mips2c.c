@@ -69,10 +69,10 @@
 */
 
 // Big ol' header
-#include "mips2c.h"
-#include "instructions.h"
-#include "memory.h"
-#include "registers.h"
+#include "headers/mips2c.h"
+#include "headers/instructions.h"
+#include "headers/memory.h"
+#include "headers/registers.h"
 #include <getopt.h>
 
 

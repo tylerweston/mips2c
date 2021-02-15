@@ -34,10 +34,10 @@
 // 						$a2 = number of characters to write	$v0 contains number of characters written (negative if error). See note below table
 // close file		16	$a0 = file descriptor	 
 
-#include "mips2c.h"
-#include "instructions.h"
-#include "registers.h"
-#include "memory.h"
+#include "headers/mips2c.h"
+#include "headers/instructions.h"
+#include "headers/registers.h"
+#include "headers/memory.h"
 
 void _do_syscall()
 {

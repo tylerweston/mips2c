@@ -3,9 +3,9 @@
 		- holds memory and main implementation of it
 */
 
-#include "mips2c.h"
-#include "memory.h"
-#include "registers.h"
+#include "headers/mips2c.h"
+#include "headers/memory.h"
+#include "headers/registers.h"
 
 char* memory[MEMORY_SIZE];
 
