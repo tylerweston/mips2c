@@ -37,7 +37,7 @@
 #define MAX_LABEL_LENGTH 32	// max # of chars allowed per label //should this be diff for strings now?
 #define MAX_STR_LENGTH 64
 #define MAX_LINE_LENGTH 128
-#define MEMORY_SIZE 32768
+#define MEMORY_SIZE 512		// size in bytes
 
 // color codes for nicer output
 #define ANSI_COLOR_RED     "\x1b[31m"

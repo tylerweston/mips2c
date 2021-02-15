@@ -12,6 +12,8 @@
 
 int32_t instruction_to_machine_code(parsed_instruction* p)
 {
+	printf("Function to translate: %s\n", p->instruction);
+	return 0;
 	// convert a statement into it's 32bit machine code
 	// 6 bits opcode
 	// 5 bits rs
@@ -54,6 +56,7 @@ parsed_instruction* parse_instruction(char* statement)
 	}
 
 	char* s = strdup(statement);	// make a copy so we don't mess up original
+	char* s_orig_ptr = s;
 	const char d[2] = " ";
 
 	char *expr;
@@ -81,14 +84,15 @@ parsed_instruction* parse_instruction(char* statement)
 		if (expr == NULL) 
 		{
 			if (check_flag(f_verbose)) printf("\n");
+			free(s_orig_ptr);
 			return NULL;
 		}
 	}
 
 	if (strchr(expr, '.') == NULL && (check_flag(f_verbose)))
 	{
-				printf(ANSI_COLOR_BRIGHT_GREEN);
-				printf("%s " ANSI_COLOR_RESET, expr);	
+		printf(ANSI_COLOR_BRIGHT_GREEN);
+		printf("%s " ANSI_COLOR_RESET, expr);	
 	}
 
 	parsed_instruction* p = malloc (sizeof(parsed_instruction) + MAX_LABEL_LENGTH + 5);
@@ -137,6 +141,8 @@ parsed_instruction* parse_instruction(char* statement)
 		{
 			printf(ANSI_COLOR_BRIGHT_CYAN "%s " ANSI_COLOR_RESET, expr);
 			printf(ANSI_COLOR_YELLOW "%s\n" ANSI_COLOR_RESET, s);
+			free(s_orig_ptr);
+			free(p);
 			return NULL;
 		}
 	}
@@ -146,6 +152,8 @@ parsed_instruction* parse_instruction(char* statement)
 		case none:
 			if (check_flag(f_verbose)) printf("\n");
 			if (check_flag(f_display_warnings)) warning("Have none instruction");
+			free(s_orig_ptr);
+			free(p);
 			return NULL;
 
 		case P_instruction:
@@ -419,7 +427,7 @@ parsed_instruction* parse_instruction(char* statement)
 	}
 
 	if (check_flag(f_verbose)) printf(" \n");
-
+	free(s_orig_ptr);	
 	return p;
 }
 
@@ -1305,5 +1313,5 @@ int get_line_from_labels(char* search_label)
 	char err_msg[128];
 	sprintf(err_msg, "Cannot find label %s", search_label);
 	error(err_msg);
+	return -1;
 }
-

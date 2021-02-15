@@ -380,7 +380,7 @@ program get_program(char* filename)
 		    	// ok we got a label
 		    	// now add it to a linked list along with it's line number!	    	
 		    	label_list *node = malloc(sizeof(label_list));
-		    	node->label = malloc(sizeof(MAX_LABEL_LENGTH));
+		    	node->label = malloc(MAX_LABEL_LENGTH);
 		    	node->label = strdup(label_get);
 		    	node->data_type = _PC;
 		    	node->source_line = i;
@@ -536,9 +536,8 @@ program get_program(char* filename)
 		    			p++;
 	    			}
 		    	}
-
 		    	label_list *node = malloc(sizeof(label_list));
-		    	node->label = malloc(sizeof(MAX_LABEL_LENGTH));
+		    	node->label = malloc(MAX_LABEL_LENGTH);
 		    	node->label = strdup(label_get);
 		    	node->data_type = d_type;
 		    	node->source_line = i;		// we don't care about this!
@@ -667,9 +666,8 @@ program get_program(char* filename)
 			    		program.source[i][j] == '\t' ||
 			    		program.source[i][j] == '\r' ||
 			    		program.source[i][j] == '#' || 
-
 			    		program.source[i][j] == ' '); j--);
-	    	program.source[i][j+1] = '\0';
+	    program.source[i][j+1] = '\0';
 
 	    // switch between different parser states
 	    if (program.source[i][0] == '.')
