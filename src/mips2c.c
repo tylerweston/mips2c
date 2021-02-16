@@ -5,6 +5,7 @@
 	"I should probably be studying..."
 
 	todo:
+		- support for macros
 		- write more tests
 		- doesn't display text accurately rn when parsing
 	    - should replace , with ' '
@@ -45,7 +46,6 @@
 		- better parsing engine! the current method is pretty meh.
 		- todo eventually: instructions gets interpreted into
 		  machine code and loaded and run from virtual memory
-		- rearrange structure of source code, headers, and example programs
 		- LOTS of refactoring to do, especially those gross giant function switch blocks
 		  to get information about them! store it in some sort of dictionary or hashmap or
 		  something!
@@ -53,7 +53,6 @@
 		- floating point coprocessor (CP1)
 			- 32 new registers to add
 			- instructions that have to do with floating point
-		- figure out whats up with incompatible pointer types with linked list for labels
 		- probably memory leaks EVERYWHERE! need to make sure we clean them up!
 
 	references used:
@@ -75,12 +74,15 @@
 #include "headers/registers.h"
 #include <getopt.h>
 
-
 // private functions
 void parse_arguments(int argc, char* argv[], char** filename);
 void display_usage(bool full);
 void show_version();
 void no_filename_provided();
+void print_program(program* p);
+void preprocess_program(program* p);
+
+void parse_program(program* p);
 
 int flags = 0;	// init flags
 int pc = 0;
@@ -118,10 +120,11 @@ int main(int argc, char *argv[])
 
 	if (check_flag(f_debug)) printf("Parsing file: " ANSI_COLOR_BLUE "%s\n" ANSI_COLOR_RESET, filename);
 	program = get_program(filename);
-	
+	preprocess_program(&program);
+	parse_program(&program);
+
 	int step_number = 0;
 
-	bool finished = false;
 	char* statement;
 	parsed_instruction* p;
 
@@ -268,113 +271,130 @@ void parse_arguments(int argc, char* argv[], char** filename)
 		no_filename_provided();
 }
 
-
-program get_program(char* filename) 
+void print_program(program* p)
 {
+	printf("Displaying program %s-------\n", p->filename);
+	for (unsigned int i = 0; i < p->lines; ++i)
+	{
+		printf("%s", p->source[i]);
+	}
+	printf("\nend of program:----------------\n");
+}
+
+void preprocess_program(program* p)
+{
+	// given a program p, preprocess it
+	// remove comments and excess whitespace
+	// - expand pseudoinstructions?
+	// - expand macros?
+
+	// step through each line and clean it up
+	bool in_quotes = false;
+	for (unsigned int i = 0; i < p->lines; ++i)
+	{
+		// remove excess whitespace at the beginning of the line
+		while (isspace(p->source[i][0]))
+	    {
+	    	p->source[i]++;
+	    }
+	    // This entire line is a comment, so let's ignore it
+	    if (p->source[i][0] == '#')
+	    {
+	    	p->source[i][0] = '\0';
+	    }
+		for (int j = 0; j < strlen(p->source[i]); j++)	
+	    {
+	    	if (p->source[i][j] == '#') 	// rest of line is comment, ignore it
+	    	{
+	    		p->source[i][j] = '\0';
+	    		break;
+	    	}
+	    	if (p->source[i][j] == '\"')
+	    	{
+	    		in_quotes = !in_quotes;
+	    	}
+	    	if (p->source[i][j] == ',' && !in_quotes)		// remove commas UNLESS we're in a quoted section
+	    	{
+	    		p->source[i][j] = ' ';
+	    		continue;
+	    	}
+	    }
+	    // clean up line endings
+	    int j;
+	    for (j = strlen(p->source[i]) - 1; j >= 0 && 
+			    	   (p->source[i][j] == '\n' || 
+			    		p->source[i][j] == '\t' ||
+			    		p->source[i][j] == '\r' ||
+			    		p->source[i][j] == '#' || 		// These shouldn't be here at this point?
+			    		p->source[i][j] == ' '); j--);
+
+	    p->source[i][j+1] = '\0';
+	}
+}
+
+void parse_program(program* p)
+{
+	// todo: this should fill in a program struct that is defined elsewhere
+	// This will only read in the program 
 	// Getting the program and parsing should happen seperately!
 	parser_state p_state;
 	p_state = TEXT_STATE;
 
 	int data_segment_offset = 0;	// track where we are in memory
 
-	// TODO: MAYBE move all prints to stderr to stdout (??)
-	program program;
-	program.filename = (char*) malloc(strlen(filename) + 1);
-	char* line_parse;
-
 	// what is not working right about this linked list?
 	label_list* head = NULL;
 	label_list* tail = NULL;
 
-	strcpy(program.filename, filename);
-	int lines_allocated = 128;			// start with 128 lines of space and increase if needed
+	for (unsigned int i = 0; i < p->lines; ++i)
+	{
+		// check if we have an empty line first
+		// maybe we should remove these somewhere else, for now, just ignore
+		if (p->source[i][0] == '\0')
+			continue;
 
-	// Allocate lines of text
-	program.source = (char **)malloc(sizeof(char*)*lines_allocated);
-	if (program.source == NULL)
-    {
-    	error("Out of memory");
-    }
+		// check to change parser state
+		if (p->source[i][0] == '.')
+		{
+			if (strcmp(p->source[i], ".data") == 0)
+			{
+				p_state = DATA_STATE;
+				continue;
+			}
+			if (strcmp(p->source[i], ".text") == 0)
+			{
+				p_state = TEXT_STATE;
+				continue;
+			}
+			if (strcmp(p->source[i], ".global") == 0)
+			{
+				p_state = GLOBAL_STATE;
+				continue;
+			}
+		}
 
-	FILE *fp = fopen(filename, "r");
-	if (fp == NULL)
-    {
-    	error("Error opening file");
-    }
-
-	int i = 0;	// line index
-	// TODO: Split this into different chunks.
-	// First, we'll read the source in, then parse it into tokens,
-	// then we'll interpret it
-	while(1)
-    {
-	
-	    int j;	// character index
-	    // alloc more space if needed
-	    if (i >= lines_allocated)
-        {
-	        int new_size;
-
-	        // double alloc'd space
-	        new_size = lines_allocated * 2;
-	        program.source = (char **) realloc(program.source, sizeof(char*)*new_size);
-	        if (program.source == NULL)
-            {
-            	error("Out of memory");
-            }
-	        lines_allocated = new_size;
-        }
-
-	    // alloc line for space
-	    program.source[i] = malloc(MAX_LINE_LENGTH);
-	    line_parse = malloc(MAX_LINE_LENGTH);
-
-	    if (program.source[i]==NULL)
-        {
-            error("Out of memory");
-        }
-
-	    if (fgets(line_parse, MAX_LINE_LENGTH-1, fp) == NULL)
+	    if (strchr(p->source[i], ':') != NULL)
 	    {
-	        break;
-	    }
-
-	    // remove white space from start of line:
-	    while (isspace(line_parse[0]))
-	    {
-	    	line_parse++;
-	    }
-
-	    if (line_parse[0] == '#')	// this entire line is a comment, ignore it
-	    {
-	    	continue;
-	    }
-
-	    // todo: make sure we haven't tried to store the same label twice,
-	    //		 this would probably boink things up!
-	    if (strchr(line_parse, ':') != NULL)
-	    {
-	    	if (isalpha(line_parse[0]) == 0)
+	    	if (isalpha(p->source[i][0]) == 0)
 	    	{
     			char err_msg[128];
-				sprintf(err_msg, "Label %s must start with alphabetic character", line_parse);
+				sprintf(err_msg, "Label %s must start with alphabetic character", p->source[i]);
 				error(err_msg);
 	    	}
 
-	    	// every thing underneath here is only if we are in text section, we match up a label with a line number!
-	    	// so use a state machine here to check if we are in .data or .text section
 
+			// take different action depending on parser state
 	    	if (p_state == TEXT_STATE)
 	    	{
 		    	char* label_get = malloc(MAX_LABEL_LENGTH);
 		    	int pi;
 		    	for (pi = 0; ; pi++)
 		    	{
-		    		if (line_parse[pi] == ':')
+		    		if (p->source[i][pi] == ':')
 		    		{
 		    			break;
 		    		}
-		    		label_get[pi] = line_parse[pi];
+		    		label_get[pi] = p->source[i][pi];
 		    	}
 		    	label_get[pi] = 0;	// null terminate the string
 		    	// ok we got a label
@@ -417,20 +437,20 @@ program get_program(char* filename)
 		    	// character = 4 bits
 		    	int k = 0;
 		    	data_types d_type;
-		    	char* p = strdup(strchr(line_parse, ':'));
+		    	char* line_copy = strdup(strchr(p->source[i], ':'));
 		    	char* value = malloc(MAX_STR_LENGTH);
-		    	p++;	// p should now point to a space
+		    	line_copy++;	// p should now point to a space
 		    	int d_state = 0;
 		    	// get label
 		    	char* label_get = malloc(MAX_LABEL_LENGTH);
 		    	int pi;
 		    	for (pi = 0; ; pi++)
 		    	{
-		    		if (line_parse[pi] == ':')
+		    		if (p->source[i][pi] == ':')
 		    		{
 		    			break;
 		    		}
-		    		label_get[pi] = line_parse[pi];
+		    		label_get[pi] = p->source[i][pi];
 		    	}
 		    	label_get[pi] = 0;	// null terminate the string
 
@@ -438,16 +458,16 @@ program get_program(char* filename)
 		    	{
 		    		if (d_state == 0)
 		    		{
-		    			if (*p == ' ' || *p == '\t')
+		    			if (*line_copy == ' ' || *line_copy == '\t')
 		    			{
 		    				// d_state++;
-		    				p++;
+		    				line_copy++;
 		    			}
 		    			else
-		    			if (*p == '.')
+		    			if (*line_copy == '.')
 		    			{
 		    				d_state = 2;
-		    				p++;
+		    				line_copy++;
 		    			}
 		    			else
 		    			{
@@ -457,26 +477,26 @@ program get_program(char* filename)
 		    		else 
 		    		if (d_state == 1)
 		    		{
-		    			if (*p != '.')
+		    			if (*line_copy != '.')
 		    			{
 		    				// we need a .
 		    				error("Expected . before data type");
 		    			}
 		    			d_state++;
-		    			p++;
+		    			line_copy++;
 		    		} 
 		    		else
 	    			if (d_state == 2)
 		    		{	
 		    			// grab data type
-		    			data_type[k++] = *p;
-		    			if (*p == ' ')
+		    			data_type[k++] = *line_copy;
+		    			if (*line_copy == ' ')
 		    			{
 		    				data_type[k - 1] = 0;
 		    				k = 0;	// reset k so we can use it again
 		    				d_state++;
 		    			}
-		    			p++;
+		    			line_copy++;
 		 
 		    		}
 	    			else
@@ -528,12 +548,12 @@ program get_program(char* filename)
 	    			}
 	    			else
 	    			{
-	    				value[k++] = *p;
-		    			if (*p == '\n' || *p == '\r')
+	    				value[k++] = *line_copy;
+		    			if (*line_copy == '\0')
 		    			{
 		    				break;
 		    			}
-		    			p++;
+		    			line_copy++;
 	    			}
 		    	}
 		    	label_list *node = malloc(sizeof(label_list));
@@ -636,64 +656,7 @@ program get_program(char* filename)
 		    	// todo: what happens here??
 		    }
 	    }
-
-	    int k = 0;
-	    int len = strlen(line_parse);
-
-		for (int j=0; j<len; j++)	
-	    {
-	    	if (line_parse[j] == '#') 	// rest of line is comment, ignore it
-	    	{
-	    		program.source[i][k] = '\0';
-	    		break;
-	    	}
-	    	if (line_parse[j] == ',')	// remove pesky commas, deal with it
-	    	{
-	    		program.source[i][k++] = ' ';
-	    		continue;
-	    	}
-	    	program.source[i][k++] = line_parse[j];
-	    }
-
-	    // free(line_parse);		// deal with memory leaks if we can
-
-	    program.source[i][k] = '\0';
-
-	    // todo: does this do anythin useful or nah?
-	    // clean up line endings
-	    for (j = strlen(program.source[i]) - 1; j >= 0 && 
-			    	   (program.source[i][j] == '\n' || 
-			    		program.source[i][j] == '\t' ||
-			    		program.source[i][j] == '\r' ||
-			    		program.source[i][j] == '#' || 
-			    		program.source[i][j] == ' '); j--);
-	    program.source[i][j+1] = '\0';
-
-	    // switch between different parser states
-	    if (program.source[i][0] == '.')
-	    {
-	    	if (strcmp(program.source[i], ".data") == 0)
-	    	{
-	    		p_state = DATA_STATE;
-	    	}
-	    	if (strcmp(program.source[i], ".text") == 0)
-	    	{
-	    		p_state = TEXT_STATE;
-	    	}
-	    	if (strcmp(program.source[i], ".global") == 0)
-	    	{
-	    		p_state = GLOBAL_STATE;
-	    	}
-	    }
-
-	    i++;
-
-    }
-
-	/* Close file */
-	fclose(fp);
-
-	program.lines = i;
+	}
 
 	labels = head;
 
@@ -709,21 +672,74 @@ program get_program(char* filename)
 		print_memory();
 	}
 
-	return program;
 }
 
-// todo: for now assume lowercase
-// todo: note. don't make .data lower case!
-// char* lower_case(char* str)
-// {
-// 	for ( ; *str; ++str) *str = tolower(*str);
-// 	return str;
-// }
 
-// int free_program(char** program)
-// {
-		// eventually use this to release mem alloc'd
-// }
+program get_program(char* filename) 
+{
+	// TODO: MAYBE move all prints to stderr to stdout (??)
+	program program;
+	program.filename = (char*) malloc(strlen(filename) + 1);
+	char* line_parse;
+	line_parse = malloc(MAX_LINE_LENGTH);
+
+	strcpy(program.filename, filename);
+	int lines_allocated = 128;			// start with 128 lines of space and increase if needed
+
+	// Allocate lines of text
+	program.source = (char **)malloc(sizeof(char*)*lines_allocated);
+	if (program.source == NULL)
+    {
+    	error("Out of memory");
+    }
+
+	FILE *fp = fopen(filename, "r");
+	if (fp == NULL)
+    {
+    	error("Error opening file");
+    }
+
+	int i = 0;	// line index
+	while(1)
+    {
+	    // alloc more space if needed
+	    if (i >= lines_allocated)
+        {
+	        int new_size;
+
+	        // double alloc'd space
+	        new_size = lines_allocated * 2;
+	        program.source = (char **) realloc(program.source, sizeof(char*)*new_size);
+	        if (program.source == NULL)
+            {
+            	error("Out of memory");
+            }
+	        lines_allocated = new_size;
+        }
+
+	    // alloc line for space
+	    program.source[i] = malloc(MAX_LINE_LENGTH);
+
+
+	    if (program.source[i]==NULL)
+        {
+            error("Out of memory");
+        }
+        memset(line_parse, 0, MAX_LINE_LENGTH);
+	    if (fgets(line_parse, MAX_LINE_LENGTH-1, fp) == NULL)
+	    {
+	        break;
+	    }
+
+	    program.source[i] = strdup(line_parse);
+	    i++;
+	}
+	free(line_parse);
+	fclose(fp);
+
+	program.lines = i;
+	return program;
+}
 
 void display_usage(bool full)
 {
