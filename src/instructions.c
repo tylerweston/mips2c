@@ -1298,7 +1298,6 @@ void print_instruction(parsed_instruction* p) {
 // helper functions here!
 int get_line_from_labels(char* search_label)
 {
-	//  if (debug) print_labels();
 	label_list *curr = labels;
 	while (curr != NULL)
 	{
@@ -1309,9 +1308,6 @@ int get_line_from_labels(char* search_label)
 
 		curr = curr->next;
 	}
-
-	char err_msg[128];
-	sprintf(err_msg, "Cannot find label %s", search_label);
-	error(err_msg);
+	error("Cannot find label %s", search_label);
 	return -1;
 }

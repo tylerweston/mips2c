@@ -3,12 +3,23 @@
 */
 #include "headers/mips2c.h"
 #include <stdio.h>
+#include <stdarg.h>
 
-// plump this up? print to stderr as well for error logging?
-void error(char* error)
+// may want to print this to stderr no matter what? how would we handle this
+// in ncurses mode? some errors might be salvagable and we'll want to bounce back from
+// them?
+void error(const char * errmsg, ... )
 {
-	PRINT(ANSI_COLOR_RED "\nERROR" ANSI_COLOR_RESET ": %s\n", error);
-	// fprintf(stderr, "%s\n", error);
+	PRINT(ANSI_COLOR_RED "\nERROR" ANSI_COLOR_RESET ": ");
+	va_list args;
+	va_start (args, errmsg);
+	if (!check_flag(f_curses))
+		vprintf (errmsg, args);
+	else if (check_flag(f_curses))
+		vwprintw(stdscr, errmsg, args);
+	va_end (args);
+
 	exit_info();
 	exit(1);
+
 }
