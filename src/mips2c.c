@@ -249,7 +249,7 @@ void parse_arguments(int argc, char* argv[], char** filename)
 {
 	int opt;
 	int option_index = 0;
-	static const char* arg_flags = "s:vbdhpriwnmt";
+	static const char* arg_flags = "s:vbdhpriwnmtc";
 	static struct option long_options[] =
 	{
 		{"verbose",				no_argument, 		0, 'b'},
