@@ -100,13 +100,13 @@ void _print_string()
 			}
 		}
 
-		printf("%c", c);
+		PRINT("%c", c);
 		if (c == 0)
 		{
 			break;
 		}
 	}
-	if (check_flag(f_verbose)||check_flag(f_debug)) printf("\n");
+	if (check_flag(f_verbose)||check_flag(f_debug)) PRINT("\n");
 	// free(c);
 }
 
@@ -136,12 +136,12 @@ void _print_int()
 	if (check_flag(f_verbose)||check_flag(f_debug))
 	{
 		// a little extra output if we're in verbose mode
-		printf(ANSI_COLOR_BRIGHT_RED ":" ANSI_COLOR_RESET "%i", to_print);
-		printf("\n");
+		PRINT(ANSI_COLOR_BRIGHT_RED ":" ANSI_COLOR_RESET "%i", to_print);
+		PRINT("\n");
 	}
 	else
 	{
-		printf("%i", to_print);
+		PRINT("%i", to_print);
 	}
 }
 
@@ -159,12 +159,12 @@ void _print_char()
 	if (check_flag(f_verbose)||check_flag(f_debug))
 	{
 		// a little extra output if we're in verbose mode	
-		printf(ANSI_COLOR_BRIGHT_RED ":" ANSI_COLOR_RESET "%c", to_print);
-		printf("\n");
+		PRINT(ANSI_COLOR_BRIGHT_RED ":" ANSI_COLOR_RESET "%c", to_print);
+		PRINT("\n");
 	}
 	else
 	{
-		printf("%c", to_print);		
+		PRINT("%c", to_print);		
 	}
 }
 
@@ -180,12 +180,12 @@ void _get_char()
 void _do_terminate_no_code()
 {
 	exit_info();
-	exit(0);
+	single_exitpoint(0);
 }
 
 void _do_terminate_with_code()
 {
 	int break_result = read_register(registers, _$A0);
 	exit_info();
-	exit(break_result);
+	single_exitpoint(break_result);
 }

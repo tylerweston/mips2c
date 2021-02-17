@@ -12,7 +12,7 @@
 
 int32_t instruction_to_machine_code(parsed_instruction* p)
 {
-	printf("Function to translate: %s\n", p->instruction);
+	PRINT("Function to translate: %s\n", p->instruction);
 	return 0;
 	// convert a statement into it's 32bit machine code
 	// 6 bits opcode
@@ -45,7 +45,7 @@ parsed_instruction* parse_instruction(char* statement)
 {
 	// Given a statement, parse it to return a parsed_instruction
 	if (check_flag(f_debug)) {
-		printf(ANSI_COLOR_BRIGHT_RED "> " ANSI_COLOR_RESET"%s\n", statement);
+		PRINT(ANSI_COLOR_BRIGHT_RED "> " ANSI_COLOR_RESET"%s\n", statement);
 	}
 	// if we ever get a blank statement, throw a warning
 	if ((strcmp(statement, " ") == 0) ||
@@ -76,14 +76,14 @@ parsed_instruction* parse_instruction(char* statement)
 	{
 		if (check_flag(f_verbose))
 		{
-			printf(ANSI_COLOR_BRIGHT_YELLOW);
-			printf("%s " ANSI_COLOR_RESET, expr);
+			PRINT(ANSI_COLOR_BRIGHT_YELLOW);
+			PRINT("%s " ANSI_COLOR_RESET, expr);
 		}
 
 		expr = strtok_r(s, d, &s);
 		if (expr == NULL) 
 		{
-			if (check_flag(f_verbose)) printf("\n");
+			if (check_flag(f_verbose)) PRINT("\n");
 			free(s_orig_ptr);
 			return NULL;
 		}
@@ -91,8 +91,8 @@ parsed_instruction* parse_instruction(char* statement)
 
 	if (strchr(expr, '.') == NULL && (check_flag(f_verbose)))
 	{
-		printf(ANSI_COLOR_BRIGHT_GREEN);
-		printf("%s " ANSI_COLOR_RESET, expr);	
+		PRINT(ANSI_COLOR_BRIGHT_GREEN);
+		PRINT("%s " ANSI_COLOR_RESET, expr);	
 	}
 
 	parsed_instruction* p = malloc (sizeof(parsed_instruction) + MAX_LABEL_LENGTH + 5);
@@ -139,8 +139,8 @@ parsed_instruction* parse_instruction(char* statement)
 	{
 		if (expr[0] == '.')
 		{
-			printf(ANSI_COLOR_BRIGHT_CYAN "%s " ANSI_COLOR_RESET, expr);
-			printf(ANSI_COLOR_YELLOW "%s\n" ANSI_COLOR_RESET, s);
+			PRINT(ANSI_COLOR_BRIGHT_CYAN "%s " ANSI_COLOR_RESET, expr);
+			PRINT(ANSI_COLOR_YELLOW "%s\n" ANSI_COLOR_RESET, s);
 			free(s_orig_ptr);
 			free(p);
 			return NULL;
@@ -150,7 +150,7 @@ parsed_instruction* parse_instruction(char* statement)
 	switch (p->type)
 	{
 		case none:
-			if (check_flag(f_verbose)) printf("\n");
+			if (check_flag(f_verbose)) PRINT("\n");
 			if (check_flag(f_display_warnings)) warning("Have none instruction");
 			free(s_orig_ptr);
 			free(p);
@@ -185,7 +185,7 @@ parsed_instruction* parse_instruction(char* statement)
 				}
 				p->t_reg = get_register(rt);
 				p->t_reg_no = get_register_no(rt);
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
 
 				rs = strtok_r(s, d, &s);
 				if (rs == NULL)
@@ -194,7 +194,7 @@ parsed_instruction* parse_instruction(char* statement)
 				}
 				p->s_reg = get_register(rs);
 				p->s_reg_no = get_register_no(rs);
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
 			}
 
 			if (strcmp(expr, "li") == 0 ||
@@ -219,7 +219,7 @@ parsed_instruction* parse_instruction(char* statement)
 					p->d_reg = get_register(toke);
 					p->d_reg_no = get_register_no(toke);	
 				}
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, toke);
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, toke);
 			
 
 				char* get_label;
@@ -233,13 +233,13 @@ parsed_instruction* parse_instruction(char* statement)
 				if (strcmp(expr, "la") == 0)
 				{
 					strcpy(p->label, get_label);
-					if (check_flag(f_verbose)) printf(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);		
+					if (check_flag(f_verbose)) PRINT(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);		
 				}
 
 				if (strcmp(expr, "li") == 0)
 				{
 					p->imm = str_to_int(get_label);
-					if (check_flag(f_verbose)) printf(ANSI_COLOR_CYAN "%s " ANSI_COLOR_RESET, get_label);
+					if (check_flag(f_verbose)) PRINT(ANSI_COLOR_CYAN "%s " ANSI_COLOR_RESET, get_label);
 				}
 			}
 
@@ -263,7 +263,7 @@ parsed_instruction* parse_instruction(char* statement)
 				}
 				p->s_reg = get_register(rs);
 				p->s_reg_no = get_register_no(rs);
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
 				break;
 			}
 
@@ -277,7 +277,7 @@ parsed_instruction* parse_instruction(char* statement)
 				}
 				p->d_reg = get_register(rd);
 				p->d_reg_no = get_register_no(rd);
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rd);
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rd);
 			}
 
 			rs = strtok_r(s, d, &s);
@@ -287,7 +287,7 @@ parsed_instruction* parse_instruction(char* statement)
 			}
 			p->s_reg = get_register(rs);
 			p->s_reg_no = get_register_no(rs);
-			if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
+			if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
 
 			rt = strtok_r(s, d, &s);
 			if (rt == NULL)
@@ -296,7 +296,7 @@ parsed_instruction* parse_instruction(char* statement)
 			}
 			p->t_reg = get_register(rt);
 			p->t_reg_no = get_register_no(rt);
-			if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
+			if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
 			break;
 
 		case I_instruction:
@@ -312,7 +312,7 @@ parsed_instruction* parse_instruction(char* statement)
 				}
 				p->t_reg = get_register(rt);
 				p->t_reg_no = get_register_no(rt);
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
 
 				if (s[0] == '(')
 				{
@@ -329,7 +329,7 @@ parsed_instruction* parse_instruction(char* statement)
 					p->imm = str_to_int(imm);
 				}
 
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_CYAN "%s" ANSI_COLOR_RESET, imm);
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_CYAN "%s" ANSI_COLOR_RESET, imm);
 
 				rs = strtok_r(s, ")", &s);
 				if (rs == NULL)
@@ -339,9 +339,9 @@ parsed_instruction* parse_instruction(char* statement)
 
 				p->s_reg = get_register(rs);
 				p->s_reg_no = get_register_no(rs);
-				if (check_flag(f_verbose)) printf("(");
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s" ANSI_COLOR_RESET, rs);	
-				if (check_flag(f_verbose)) printf(")");
+				if (check_flag(f_verbose)) PRINT("(");
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s" ANSI_COLOR_RESET, rs);	
+				if (check_flag(f_verbose)) PRINT(")");
 			}
 			else
 			if (strcmp(expr, "beq") == 0 ||
@@ -357,7 +357,7 @@ parsed_instruction* parse_instruction(char* statement)
 				}
 				p->s_reg = get_register(rs);
 				p->s_reg_no = get_register_no(rs);
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);	
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);	
 
 				if (get_num_args(expr) == 2)
 				{
@@ -368,7 +368,7 @@ parsed_instruction* parse_instruction(char* statement)
 					}
 					p->t_reg = get_register(rt);
 					p->t_reg_no = get_register_no(rt);	
-					if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
+					if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
 				}
 
 				char* get_label;
@@ -378,7 +378,7 @@ parsed_instruction* parse_instruction(char* statement)
 					error("Couldn't read label");
 				}
 				strcpy(p->label, get_label);
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);	
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);	
 			} 
 			else 
 			{
@@ -389,7 +389,7 @@ parsed_instruction* parse_instruction(char* statement)
 				}
 				p->t_reg = get_register(rt);
 				p->t_reg_no = get_register_no(rt);			
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rt);
 
 
 				if (get_num_args(expr) == 2)
@@ -401,12 +401,12 @@ parsed_instruction* parse_instruction(char* statement)
 					}
 					p->s_reg = get_register(rs);
 					p->s_reg_no = get_register_no(rs);
-					if (check_flag(f_verbose)) printf(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
+					if (check_flag(f_verbose)) PRINT(ANSI_COLOR_MAGENTA "%s " ANSI_COLOR_RESET, rs);
 				}
 
 				imm = strtok_r(s, d, &s);
 				p->imm = str_to_int(imm);
-				if (check_flag(f_verbose)) printf(ANSI_COLOR_CYAN "%s " ANSI_COLOR_RESET, imm);
+				if (check_flag(f_verbose)) PRINT(ANSI_COLOR_CYAN "%s " ANSI_COLOR_RESET, imm);
 			}
 			break;
 
@@ -419,14 +419,14 @@ parsed_instruction* parse_instruction(char* statement)
 				error("Couldn't read label");
 			}
 			strcpy(p->label, get_label);
-			if (check_flag(f_verbose)) printf(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);	
+			if (check_flag(f_verbose)) PRINT(ANSI_COLOR_BRIGHT_YELLOW "%s " ANSI_COLOR_RESET, get_label);	
 			break;
 
 		default:
 			break;
 	}
 
-	if (check_flag(f_verbose)) printf(" \n");
+	if (check_flag(f_verbose)) PRINT(" \n");
 	free(s_orig_ptr);	
 	return p;
 }
@@ -1260,38 +1260,38 @@ void print_instruction(parsed_instruction* p) {
 	
 	// display information about a parsed instruction!
 
-	printf("------------------------------\n");
-	printf("instruction name: \t%s\n", p->instruction);
-	printf("Instruction type: \t");
+	PRINT("------------------------------\n");
+	PRINT("instruction name: \t%s\n", p->instruction);
+	PRINT("Instruction type: \t");
 
 	switch(p->type)
 	{
 		case R_instruction:
-			printf("R instruction\n");
+			PRINT("R instruction\n");
 			break;
 		case I_instruction:
-			printf("I instruction\n");
+			PRINT("I instruction\n");
 			break;
 		case J_instruction:
-			printf("J instruction\n");
+			PRINT("J instruction\n");
 			break;
 		case P_instruction:
-			printf("pseudoinstruction\n");
+			PRINT("pseudoinstruction\n");
 			break;
 		case none:
-			printf("none\n");
+			PRINT("none\n");
 			break;
 	}
 
-	printf("opcode: \t%d\n", p->opcode);
-	printf("S register: \t%s / %d\n", reg_num_to_str(p->s_reg_no), p->s_reg_no);
-	printf("T register: \t%s / %d\n", reg_num_to_str(p->t_reg_no), p->t_reg_no);
-	printf("D register: \t%s / %d\n", reg_num_to_str(p->d_reg_no), p->d_reg_no);	
-	printf("shamt: \t%d\n", p->shamt);
-	printf("funct: \t%d\n", p->funct);
-	printf("immediate: \t%d\n", p->imm);
-	printf("address: \t%d\n", p->address);
-	printf("------------------------------\n");
+	PRINT("opcode: \t%d\n", p->opcode);
+	PRINT("S register: \t%s / %d\n", reg_num_to_str(p->s_reg_no), p->s_reg_no);
+	PRINT("T register: \t%s / %d\n", reg_num_to_str(p->t_reg_no), p->t_reg_no);
+	PRINT("D register: \t%s / %d\n", reg_num_to_str(p->d_reg_no), p->d_reg_no);	
+	PRINT("shamt: \t%d\n", p->shamt);
+	PRINT("funct: \t%d\n", p->funct);
+	PRINT("immediate: \t%d\n", p->imm);
+	PRINT("address: \t%d\n", p->address);
+	PRINT("------------------------------\n");
 
 }
 
