@@ -123,13 +123,14 @@ extern label_list* labels;
 
 // functions ========================================================
 void PRINT( const char * format, ... );
+void error(const char * errmsg, ... );
 void single_exitpoint(int status);
 program get_program(char* filename);
 // int free_program(char** program);
 int str_to_int(char* str);	// just in case atoi is a no go
 void exit_info();
 int align4(int num);
-void error(char* error);
+
 
 // for debugging purposes
 void print_labels();

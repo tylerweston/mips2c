@@ -7,8 +7,8 @@
 	todo:
 		- support for macros
 		- write more tests
+			- there should be unit testing written with Check in C
 		- doesn't display text accurately rn when parsing
-	    - should replace , with ' '
 		- bubble sort still isn't working? why? try re-downloading,
 		  why does some syntax have to change? implement that next!
 		  such as wordd 12:0 or whatever it was!
@@ -78,13 +78,13 @@
 
 void PRINT( const char * format, ... )
 {
-  va_list args;
-  va_start (args, format);
-  if (!check_flag(f_curses))
-  	vprintf (format, args);
-  else if (check_flag(f_curses))
-  	vwprintw(stdscr, format, args);
-  va_end (args);
+	va_list args;
+	va_start (args, format);
+	if (!check_flag(f_curses))
+		vprintf (format, args);
+	else if (check_flag(f_curses))
+		vwprintw(stdscr, format, args);
+	va_end (args);
 }
 
 // private functions
@@ -440,9 +440,7 @@ void parse_program(program* p)
 	    {
 	    	if (isalpha(p->source[i][0]) == 0)
 	    	{
-    			char err_msg[128];
-				sprintf(err_msg, "Label %s must start with alphabetic character", p->source[i]);
-				error(err_msg);
+				error("Label %s must start with alphabetic character", p->source[i]);
 	    	}
 
 
