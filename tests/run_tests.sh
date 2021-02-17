@@ -11,7 +11,7 @@ do
 	echo -n Testing: ${testentry} "... " 
 	filename="${testentry%.*}"
 	# To avoid gobbling the last newline, we append an x first
-	out=$(../mips2c ${testentry} --testmode; echo x)
+	out=$(../mips2c ${testentry} --testmode; printf 'x')
 	# and then remove it.
 	out="${out%?}"
 	printf "${out}" > ${filename}.out

@@ -72,7 +72,20 @@
 #include "headers/instructions.h"
 #include "headers/memory.h"
 #include "headers/registers.h"
+
 #include <getopt.h>
+#include <stdarg.h>
+
+void PRINT( const char * format, ... )
+{
+  va_list args;
+  va_start (args, format);
+  if (!check_flag(f_curses))
+  	vprintf (format, args);
+  else if (check_flag(f_curses))
+  	vwprintw(stdscr, format, args);
+  va_end (args);
+}
 
 // private functions
 void parse_arguments(int argc, char* argv[], char** filename);
@@ -81,6 +94,8 @@ void show_version();
 void no_filename_provided();
 void print_program(program* p);
 void preprocess_program(program* p);
+void single_entrypoint();
+
 
 void parse_program(program* p);
 
@@ -89,9 +104,37 @@ int pc = 0;
 int max_steps;
 label_list* labels;
 
+void single_exitpoint(int status)
+{
+	if (check_flag(f_curses))
+	{
+		// wait for a keypress before exiting
+		printw("Press any key to exit.\n");
+		getch();			/* Wait for user input */
+		endwin();
+	}
+	exit(status);
+
+}
+
+void single_entrypoint()
+{
+	// Setup ncurses, note eventually this will ONLY happen if we are entering editing
+	// mode or something like that? If we are just using the basic program, we'll continue 
+	// to output to the usual console, ie if we're displaying usage or version information
+	if (check_flag(f_curses))
+	{
+		initscr();
+		raw();
+		keypad(stdscr, true);
+		noecho();
+	}
+}
+
 // Main
 int main(int argc, char *argv[])
 {
+
 	if (argc == 1)
 	{
 		display_usage(false);
@@ -101,24 +144,36 @@ int main(int argc, char *argv[])
 	char* filename = NULL;
 	program program;	// hmm... a variable named program of type program
 
-	parse_arguments(argc, argv, &filename);
+	parse_arguments(argc, argv, &filename);	// make sure there is no actual output yet here
+
+	single_entrypoint();
+
+	if (check_flag(f_show_version))
+		show_version();
+
+	if (check_flag(f_show_usage))
+		display_usage(true);
 
 	if (!filename)
 	{
-		printf("No filename supplied\n");
+		PRINT("No filename supplied\n");
 		display_usage(false);
 	}
 
 	if (!check_flag(f_no_additional_output))
 	{
-		printf(ANSI_COLOR_BRIGHT_BLUE "MIPS2C\n" ANSI_COLOR_RESET);
-		printf("--------------------------\n");
+		PRINT(ANSI_COLOR_BRIGHT_BLUE "MIPS2C\n" ANSI_COLOR_RESET);
+		PRINT("--------------------------\n");
 	}
 
-	if (check_flag(f_debug)) printf("Setting up memory\n");
+	if (check_flag(f_debug)) 
+		PRINT("Setting up memory\n");
 	clear_memory();						// also sets $SP and data offset for dataseg
 
-	if (check_flag(f_debug)) printf("Parsing file: " ANSI_COLOR_BLUE "%s\n" ANSI_COLOR_RESET, filename);
+	if (check_flag(f_debug)) 
+		PRINT("Parsing file: " ANSI_COLOR_BLUE "%s\n" ANSI_COLOR_RESET, filename);
+
+	refresh();
 	program = get_program(filename);
 	preprocess_program(&program);
 	parse_program(&program);
@@ -138,9 +193,9 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		if (check_flag(f_display_step_number)) printf("[%d]", step_number);
+		if (check_flag(f_display_step_number)) PRINT("[%d]", step_number);
 		step_number++;
-		if (check_flag(f_verbose)) printf(ANSI_COLOR_YELLOW "%d: " ANSI_COLOR_RESET, pc);
+		if (check_flag(f_verbose)) PRINT(ANSI_COLOR_YELLOW "%d: " ANSI_COLOR_RESET, pc);
 		
 		statement = strdup(program.source[pc]);
 
@@ -153,10 +208,11 @@ int main(int argc, char *argv[])
 			if (check_flag(f_display_instructions)) print_instruction(p);
 			execute_instruction(p);
 		}
+		refresh();
 	}
 
 	exit_info();
-	return 0;
+	single_exitpoint(0);
 }
 
 void exit_info() {
@@ -169,24 +225,23 @@ void exit_info() {
 	// If we have no additional output set, DON'T add an
 	// extra newline.
 	if (!check_flag(f_no_additional_output)) 
-		printf(ANSI_COLOR_RESET "\n");	// flush stuff out just in case
+		PRINT(ANSI_COLOR_RESET "\n");	// flush stuff out just in case
 }
 
 void show_version()
 {
-	printf("mips2c\n");
-	printf("Version %d.%d\n", MAJOR_VERSION, MINOR_VERSION);
-	printf("Written by Tyler Weston.\n");
-
-	printf("This work is licensed under the terms of the MIT license.\n");  
-	printf("For a copy, see <https://opensource.org/licenses/MIT>.\n");
+	PRINT("mips2c\n");
+	PRINT("Version %d.%d\n", MAJOR_VERSION, MINOR_VERSION);
+	PRINT("Written by Tyler Weston.\n\n");
+	PRINT("This work is licensed under the terms of the MIT license.\n");  
+	PRINT("For a copy, see <https://opensource.org/licenses/MIT>.\n");
 }
 
 void no_filename_provided()
 {
-	printf("No filename provided\n");
+	PRINT("No filename provided\n");
 	display_usage(false);
-	exit(1);
+	single_exitpoint(1);
 }
 
 
@@ -209,6 +264,7 @@ void parse_arguments(int argc, char* argv[], char** filename)
 		{"printregisters",		no_argument,		0, 'r'},
 		{"printwarnings",		no_argument,		0, 'w'},
 		{"printinstructions",	no_argument,		0, 'i'},
+		{"curses",				no_argument,		0, 'c'},
 		{0, 					0, 					0, 0}
 	};
 
@@ -223,11 +279,15 @@ void parse_arguments(int argc, char* argv[], char** filename)
 
 		switch (opt)
 		{
+		case 'c':
+			set_flag(f_curses);
+			break;
 		case 'b':
 			set_flag(f_verbose);
 			break;
 		case 'v':
-			show_version();
+			//show_version();
+			set_flag(f_show_version);
 			break;
 		case 't':
 			set_flag(f_no_additional_output);
@@ -236,7 +296,8 @@ void parse_arguments(int argc, char* argv[], char** filename)
 			set_flag(f_print_stack_pointer);
 			break;
 		case 'h':
-			display_usage(true);
+			//display_usage(true);
+			set_flag(f_show_usage);
 			break;
 		case 's':
 			max_steps = str_to_int(optarg);
@@ -261,11 +322,13 @@ void parse_arguments(int argc, char* argv[], char** filename)
 			set_flag(f_display_step_number);
 			break;
 		default:
-			display_usage(false);
+			set_flag(f_show_usage);
+			break;
 		}
 	}
 
 	// getopt moves non-options to the end of the command-line
+	// by the time we get here, curses mode will have been entered
 	*filename = argv[argc-1];
 	if (filename == NULL || *filename[0] == '\0' || *filename[0] == '-')	// make sure it isn't an option
 		no_filename_provided();
@@ -273,12 +336,12 @@ void parse_arguments(int argc, char* argv[], char** filename)
 
 void print_program(program* p)
 {
-	printf("Displaying program %s-------\n", p->filename);
+	PRINT("Displaying program %s-------\n", p->filename);
 	for (unsigned int i = 0; i < p->lines; ++i)
 	{
-		printf("%s", p->source[i]);
+		PRINT("%s", p->source[i]);
 	}
-	printf("\nend of program:----------------\n");
+	PRINT("\nend of program:----------------\n");
 }
 
 void preprocess_program(program* p)
@@ -562,7 +625,7 @@ void parse_program(program* p)
 		    	node->data_type = d_type;
 		    	node->source_line = i;		// we don't care about this!
 		    	node->next = NULL;
-		    	if (check_flag(f_debug)) printf(ANSI_COLOR_GREEN "%s " ANSI_COLOR_RESET, node->label);
+		    	if (check_flag(f_debug)) PRINT(ANSI_COLOR_GREEN "%s " ANSI_COLOR_RESET, node->label);
 
 		    	int32_t v;
 		    	// remove comments if they exist
@@ -604,7 +667,7 @@ void parse_program(program* p)
 		    			// write to mem
 		    			node->mem_address = data_segment_offset;
 		    			int wlen = strlen(value) + 1;	//+1 to account for null terminator
-		    			if (check_flag(f_debug)) printf("> string > %s\n", value);
+		    			if (check_flag(f_debug)) PRINT("> string > %s\n", value);
 		    			for (int wi = 0; wi < wlen; wi++)
 		    			{
 		    				char c = value[wi];
@@ -619,7 +682,7 @@ void parse_program(program* p)
 		    		case _HALF:
 		    			// todo: test this, I think it's working?
 		    			v = str_to_int(value);
-		    			if (check_flag(f_debug)) printf("> word > %i\n", v);
+		    			if (check_flag(f_debug)) PRINT("> word > %i\n", v);
 		    			node->mem_address = data_segment_offset;
 		    			int* store_loc = (int*)(&memory[data_segment_offset]);
 		    			*store_loc = v;
@@ -662,13 +725,13 @@ void parse_program(program* p)
 
 	if (check_flag(f_debug))
 	{
-		printf("Got labels:\n");
+		PRINT("Got labels:\n");
 		print_labels();
 	}
 
 	if (check_flag(f_display_memory))
 	{
-		printf("Memory:\n");
+		PRINT("Memory:\n");
 		print_memory();
 	}
 
@@ -743,31 +806,31 @@ program get_program(char* filename)
 
 void display_usage(bool full)
 {
-	printf(" Usage:\n");
-	printf("   ./mip2c filename\n");
-	printf("        loads and executes a file.\n");
-	printf("		--help or -h to see all commands\n");
-
+	PRINT(" Usage:\n");
+	PRINT("   ./mip2c filename\n");
+	PRINT("        loads and executes a file.\n");
+	PRINT("		--help or -h to see all commands\n");
 	if (!full)	// display just basic help
 	{ 
-		exit(0);
+		single_exitpoint(0);
 	}
-	printf("\nFull help:\n");
-	printf(" --help, -h\t\t\tdisplay this help message\n");
-	printf(" --version, -v\t\t\tdisplay version information\n");
-	printf(" --verbose, -b\t\t\tverbose mode\n");
-	printf(" --debug, -d\t\t\tdebug mode\n");
-	printf(" --testmode, -t\t\t\ttesting mode, no additional output\n");
-	printf(" --printsp, -p\t\t\tdisplay stack pointer\n");
-	printf(" --printmemory, -m\t\tdisplay memory\n");
-	printf(" --printinstructions, -i\tdisplay parsed instructions\n");
-	printf(" --printwarnings, -w\t\tdisplay warnings\n");
-	printf(" --printregisters, -r\t\tdisplay registers\n");
-	printf(" --maxsteps #, -s #\t\thalt after # steps iterations\n");
-	printf(" --printsteps, -n\t\tdisplay step numbers\n");
-	printf("\n");
-	printf(ANSI_COLOR_RED "Tyler Weston, 2019/2020\n" ANSI_COLOR_RESET);
-	exit(0);
+	PRINT("\nFull help:\n");
+	PRINT(" --help, -h\t\t\tdisplay this help message\n");
+	PRINT(" --version, -v\t\t\tdisplay version information\n");
+	PRINT(" --verbose, -b\t\t\tverbose mode\n");
+	PRINT(" --debug, -d\t\t\tdebug mode\n");
+	PRINT(" --curses, -c\t\t\tncurses mode (experimental)\n");
+	PRINT(" --testmode, -t\t\t\ttesting mode, no additional output\n");
+	PRINT(" --printsp, -p\t\t\tdisplay stack pointer\n");
+	PRINT(" --printmemory, -m\t\tdisplay memory\n");
+	PRINT(" --printinstructions, -i\tdisplay parsed instructions\n");
+	PRINT(" --printwarnings, -w\t\tdisplay warnings\n");
+	PRINT(" --printregisters, -r\t\tdisplay registers\n");
+	PRINT(" --maxsteps #, -s #\t\thalt after # steps iterations\n");
+	PRINT(" --printsteps, -n\t\tdisplay step numbers\n");
+	PRINT("\n");
+	PRINT(ANSI_COLOR_RED "Tyler Weston, 2019/2020\n" ANSI_COLOR_RESET);
+	single_exitpoint(0);
 }
 
 int str_to_int(char* str)
@@ -801,19 +864,18 @@ void print_labels()
 	label_list *curr = labels;
 	while (curr != NULL)
 	{
-		printf(ANSI_COLOR_BRIGHT_YELLOW "> " ANSI_COLOR_RESET);
+		PRINT(ANSI_COLOR_BRIGHT_YELLOW "> " ANSI_COLOR_RESET);
 		if (curr->data_type == _PC)
 		{
-			printf("%s\t\tline number: %d\n", curr->label, curr->source_line);
+			PRINT("%s\t\tline number: %d\n", curr->label, curr->source_line);
 		}
 		else
 		{
-			printf("%s\t\ttype: %s\n address: %d\n", curr->label, 
+			PRINT("%s\t\ttype: %s\n address: %d\n", curr->label, 
 				data_type_labels[curr->data_type], curr->mem_address);
 		}
 		curr = curr->next;
 	}
-
 }
 
 inline int align4(int num) {

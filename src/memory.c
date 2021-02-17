@@ -28,16 +28,16 @@ void clear_memory()
 
 void print_memory()
 {
-	printf("Displaying Memory:\n");
-	printf("------------------\n");
+	PRINT("Displaying Memory:\n");
+	PRINT("------------------\n");
 	for (int x = 0; x < MEMORY_SIZE; x++)
 	{
 		// TODO: Let's display this in hex?
 		if (x % 16 == 0) 
-			printf(ANSI_COLOR_BRIGHT_GREEN "\n%d:" ANSI_COLOR_RESET, x);
+			PRINT(ANSI_COLOR_BRIGHT_GREEN "\n%d:" ANSI_COLOR_RESET, x);
 		if (x % 4 == 0) 
-			printf("\t");
-		printf("%c", memory[x]);
+			PRINT("\t");
+		PRINT("%c", memory[x]);
 	}
-	printf("\n");
+	PRINT("\n");
 }

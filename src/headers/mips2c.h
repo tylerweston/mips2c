@@ -6,7 +6,8 @@
 #ifndef MIPS2C_H
 #define MIPS2C_H
 
-#include <stdio.h>
+// #include <stdio.h>
+#include <ncurses.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -28,10 +29,14 @@
 #define f_break_max (1 << 7)
 #define f_print_stack_pointer (1 << 8)
 #define f_no_additional_output (1 << 9)
+#define f_curses (1 << 10)
+#define f_show_version (1 << 11)
+#define f_show_usage (1 << 12)
 
 // does this work?
 #define set_flag(x) (flags |= x)
 #define check_flag(x) (flags & x)
+#define clear_flag(x) (flags &= ~(x))
 
 // tweak these if needed
 #define MAX_LABEL_LENGTH 32	// max # of chars allowed per label //should this be diff for strings now?
@@ -117,6 +122,8 @@ extern label_list* labels;
 
 
 // functions ========================================================
+void PRINT( const char * format, ... );
+void single_exitpoint(int status);
 program get_program(char* filename);
 // int free_program(char** program);
 int str_to_int(char* str);	// just in case atoi is a no go
